@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
+	"golang.org/x/oauth2/clientcredentials"
 	"net/http"
 )
 
@@ -110,12 +111,20 @@ func buildMeta(ctx context.Context, config *metaConfig) (*Meta, error) {
 		URL: config.providerSchema.Get("api_url").(string),
 	})
 
+	cfg := clientcredentials.Config{
+		ClientID:     config.providerSchema.Get("username").(string),
+		ClientSecret: config.providerSchema.Get("password").(string),
+		TokenURL: config.providerSchema.Get("auth_url").(string),
+	}
+	client := cfg.Client(context.Background())
+
 	configuration := sdk.Configuration{
 		UserAgent:  fmt.Sprintf("terraform-provider/%s terraform/%s", version, config.terraformVersion),
 		Debug:      true,
-		HTTPClient: &http.Client{Transport: http.DefaultTransport},
+		HTTPClient: client,
 		Servers:    servers,
 	}
+
 	apiClient := sdk.NewAPIClient(&configuration)
 
 	return &Meta{

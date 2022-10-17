@@ -1,12 +1,12 @@
 provider "graalsystems" {
-  api_url = "http://localhost:4200/api/v1"
-  auth_url = "http://localhost:4200/api/v1"
-  tenant = "XXX-XXX-XXX"
-  auth_mode = "XXX-XXX-XXX"
-  username = "XXX-XXX-XXX"
-  password = "XXX-XXX-XXX"
-  application_id = "XXX-XXX-XXX"
-  application_secret = "XXX-XXX-XXX"
+  api_url = "http://localhost:4200"
+  auth_url = "http://localhost:8089"
+  tenant = "platform-vincent-internal"
+  auth_mode = "credentials"
+  username = "vdevillers"
+  password = "devillerspwd"
+//  application_id = "XXX-XXX-XXX"
+//  application_secret = "XXX-XXX-XXX"
 }
 
 resource "project" "example_project" {

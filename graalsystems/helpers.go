@@ -1,6 +1,10 @@
 package graalsystems
 
-import "net/http"
+import (
+	sdk "github.com/graalsystems/sdk/go"
+	"net/http"
+	"strconv"
+)
 import "errors"
 
 //
@@ -25,8 +29,10 @@ func isHTTPCodeError(err error, statusCode int) bool {
 		return false
 	}
 
-	responseError := &scw.ResponseError{}
-	if errors.As(err, &responseError) && responseError.StatusCode == statusCode {
+	statusText := strconv.Itoa(statusCode) + " " + http.StatusText(statusCode)
+
+	responseError := &sdk.GenericOpenAPIError{}
+	if errors.As(err, &responseError) && responseError.Error() == statusText {
 		return true
 	}
 	return false
