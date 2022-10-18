@@ -143,7 +143,7 @@ In addition to [generic provider arguments](https://www.terraform.io/docs/config
 
 In case you want to [debug a deployment](https://www.terraform.io/internals/debugging), you can use the following command to increase the level of verbosity.
 
-`GS_DEBUG=1 TF_LOG=WARN TF_LOG_PROVIDER=DEBUG terraform apply`
+`GS_DEBUG=true TF_LOG=WARN TF_LOG_PROVIDER=DEBUG terraform apply`
 
 - `GS_DEBUG`: set the debug level of the graalsystems SDK.
 - `TF_LOG`: set the level of the Terraform logging.

@@ -9,7 +9,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 	"golang.org/x/oauth2/clientcredentials"
 	"net/http"
+	"net/http/httptrace"
+	"os"
 )
+
+var debug = os.Getenv("GS_DEBUG") != ""
 
 // ProviderConfig config can be used to provide additional config when creating provider.
 type ProviderConfig struct {
@@ -61,15 +65,15 @@ func Provider(config *ProviderConfig) plugin.ProviderFunc {
 			},
 
 			ResourcesMap: map[string]*schema.Resource{
-				"graalsystems_project": resourceGraalSystemsProject(),
+				"graalsystems_project":  resourceGraalSystemsProject(),
 				"graalsystems_identity": resourceGraalSystemsIdentity(),
-				"graalsystems_job": resourceGraalSystemsJob(),
+				"graalsystems_job":      resourceGraalSystemsJob(),
 			},
 
 			DataSourcesMap: map[string]*schema.Resource{
-				"graalsystems_project": dataSourceGraalSystemsProject(),
+				"graalsystems_project":  dataSourceGraalSystemsProject(),
 				"graalsystems_identity": dataSourceGraalSystemsIdentity(),
-				"graalsystems_job": dataSourceGraalSystemsJob(),
+				"graalsystems_job":      dataSourceGraalSystemsJob(),
 			},
 		}
 
@@ -125,11 +129,25 @@ func buildMeta(ctx context.Context, config *metaConfig) (*Meta, error) {
 		ClientSecret: config.providerSchema.Get("password").(string),
 		TokenURL:     config.providerSchema.Get("auth_url").(string),
 	}
-	client := cfg.Client(context.Background())
+
+	var client *http.Client
+	if debug {
+		trace := &httptrace.ClientTrace{
+			GetConn:      func(hostPort string) { fmt.Println("starting to create conn ", hostPort) },
+			DNSStart:     func(info httptrace.DNSStartInfo) { fmt.Println("starting to look up dns", info) },
+			DNSDone:      func(info httptrace.DNSDoneInfo) { fmt.Println("done looking up dns", info) },
+			ConnectStart: func(network, addr string) { fmt.Println("starting tcp connection", network, addr) },
+			ConnectDone:  func(network, addr string, err error) { fmt.Println("tcp connection created", network, addr, err) },
+			GotConn:      func(info httptrace.GotConnInfo) { fmt.Println("connection established", info) },
+		}
+		client = cfg.Client(httptrace.WithClientTrace(context.Background(), trace))
+	} else {
+		client = cfg.Client(context.Background())
+	}
 
 	configuration := sdk.Configuration{
 		UserAgent:  fmt.Sprintf("terraform-provider/%s terraform/%s", version, config.terraformVersion),
-		Debug:      true,
+		Debug:      debug,
 		HTTPClient: client,
 		Servers:    servers,
 	}

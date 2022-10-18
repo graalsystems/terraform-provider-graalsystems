@@ -43,5 +43,3 @@ $ make build
 $ $GOPATH/bin/terraform-provider-graalsystems
 ...
 ```
-
-Please refer to the [TESTING.md](TESTING.md) for testing.

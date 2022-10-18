@@ -9,5 +9,4 @@ func main() {
 	plugin.Serve(&plugin.ServeOpts{
 		ProviderFunc: graalsystems.Provider(graalsystems.DefaultProviderConfig()),
 	})
-
 }
