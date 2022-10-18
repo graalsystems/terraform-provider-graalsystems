@@ -7,21 +7,19 @@ import (
 )
 import "errors"
 
+// // DefaultWaitRetryInterval is used to set the retry interval to 0 during acceptance tests
+// var DefaultWaitRetryInterval *time.Duration
 //
+// // terraformResourceData is an interface for *schema.ResourceData. (used for mock)
 //
-//// DefaultWaitRetryInterval is used to set the retry interval to 0 during acceptance tests
-//var DefaultWaitRetryInterval *time.Duration
-//
-//
-//// terraformResourceData is an interface for *schema.ResourceData. (used for mock)
-//type terraformResourceData interface {
-//	HasChange(string) bool
-//	GetOk(string) (interface{}, bool)
-//	Get(string) interface{}
-//	Set(string, interface{}) error
-//	SetId(string)
-//	Id() string
-//}
+//	type terraformResourceData interface {
+//		HasChange(string) bool
+//		GetOk(string) (interface{}, bool)
+//		Get(string) interface{}
+//		Set(string, interface{}) error
+//		SetId(string)
+//		Id() string
+//	}
 //
 // isHTTPCodeError returns true if err is an http error with code statusCode
 func isHTTPCodeError(err error, statusCode int) bool {

@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    graalsystems = {
+      source = "graalsystems/graalsystems"
+    }
+  }
+  required_version = ">= 0.13"
+}
+
 provider "graalsystems" {
   api_url = "http://localhost:4200"
   auth_url = "http://localhost:8089"

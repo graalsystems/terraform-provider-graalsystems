@@ -114,7 +114,7 @@ func buildMeta(ctx context.Context, config *metaConfig) (*Meta, error) {
 	cfg := clientcredentials.Config{
 		ClientID:     config.providerSchema.Get("username").(string),
 		ClientSecret: config.providerSchema.Get("password").(string),
-		TokenURL: config.providerSchema.Get("auth_url").(string),
+		TokenURL:     config.providerSchema.Get("auth_url").(string),
 	}
 	client := cfg.Client(context.Background())
 
@@ -129,6 +129,6 @@ func buildMeta(ctx context.Context, config *metaConfig) (*Meta, error) {
 
 	return &Meta{
 		apiClient: apiClient,
-		tenant: config.providerSchema.Get("tenant").(string),
+		tenant:    config.providerSchema.Get("tenant").(string),
 	}, nil
 }
