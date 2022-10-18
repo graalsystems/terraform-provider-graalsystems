@@ -7,12 +7,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceGraalSystemsProject() *schema.Resource {
+func resourceGraalSystemsIdentity() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceGraalSystemsProjectCreate,
-		ReadContext:   resourceGraalSystemsProjectRead,
-		UpdateContext: resourceGraalSystemsProjectUpdate,
-		DeleteContext: resourceGraalSystemsProjectDelete,
+		CreateContext: resourceGraalSystemsIdentityCreate,
+		ReadContext:   resourceGraalSystemsIdentityRead,
+		UpdateContext: resourceGraalSystemsIdentityUpdate,
+		DeleteContext: resourceGraalSystemsIdentityDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
@@ -20,40 +20,40 @@ func resourceGraalSystemsProject() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "The name of the project",
+				Description: "The name of the identity",
 			},
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "The description of the project",
+				Description: "The description of the identity",
 			},
 		},
 	}
 }
 
-func resourceGraalSystemsProjectCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceGraalSystemsIdentityCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := m.(*Meta)
 	apiClient := meta.apiClient
 
 	name := d.Get("name").(string)
 	description := d.Get("description").(string)
-	project := &sdk.Project{
+	identity := &sdk.Identity{
 		Name:        &name,
 		Description: &description,
 	}
-	_, _, err := apiClient.ProjectApi.CreateProject(context.Background()).XTenant(meta.tenant).Project(*project).Execute()
+	_, _, err := apiClient.IdentityApi.CreateIdentity(context.Background()).XTenant(meta.tenant).Identity(*identity).Execute()
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	return resourceGraalSystemsProjectRead(ctx, d, meta)
+	return resourceGraalSystemsIdentityRead(ctx, d, meta)
 }
 
-func resourceGraalSystemsProjectRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceGraalSystemsIdentityRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := m.(*Meta)
 	apiClient := meta.apiClient
 
-	res, _, err := apiClient.ProjectApi.FindProjectById(context.Background(), d.Id()).XTenant(meta.tenant).Execute()
+	res, _, err := apiClient.IdentityApi.FindIdentityById(context.Background(), d.Id()).XTenant(meta.tenant).Execute()
 	if err != nil {
 		if is404Error(err) {
 			d.SetId("")
@@ -68,7 +68,7 @@ func resourceGraalSystemsProjectRead(ctx context.Context, d *schema.ResourceData
 	return nil
 }
 
-func resourceGraalSystemsProjectUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceGraalSystemsIdentityUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := m.(*Meta)
 	apiClient := meta.apiClient
 
@@ -84,20 +84,20 @@ func resourceGraalSystemsProjectUpdate(ctx context.Context, d *schema.ResourceDa
 			Value: &value,
 		}
 		patchs := &[]sdk.Patch{*patch}
-		_, _, err := apiClient.ProjectApi.UpdateProject(context.Background(), d.Id()).XTenant(meta.tenant).Patch(*patchs).Execute()
+		_, _, err := apiClient.IdentityApi.UpdateIdentity(context.Background(), d.Id()).XTenant(meta.tenant).Patch(*patchs).Execute()
 		if err != nil {
 			return diag.FromErr(err)
 		}
 	}
 
-	return resourceGraalSystemsProjectRead(ctx, d, meta)
+	return resourceGraalSystemsIdentityRead(ctx, d, meta)
 }
 
-func resourceGraalSystemsProjectDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceGraalSystemsIdentityDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := m.(*Meta)
 	apiClient := meta.apiClient
 
-	_, err := apiClient.ProjectApi.DeleteProjectById(context.Background(), d.Id()).XTenant(meta.tenant).Execute()
+	_, err := apiClient.IdentityApi.DeleteIdentityById(context.Background(), d.Id()).XTenant(meta.tenant).Execute()
 	if err != nil && !is404Error(err) {
 		return diag.FromErr(err)
 	}

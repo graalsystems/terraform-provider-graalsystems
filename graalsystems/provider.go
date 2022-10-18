@@ -53,14 +53,23 @@ func Provider(config *ProviderConfig) plugin.ProviderFunc {
 					Optional:    true,
 					Description: "The Auth URL to use.",
 				},
+				"auth_mode": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The Auth mode to use.",
+				},
 			},
 
 			ResourcesMap: map[string]*schema.Resource{
 				"graalsystems_project": resourceGraalSystemsProject(),
+				"graalsystems_identity": resourceGraalSystemsIdentity(),
+				"graalsystems_job": resourceGraalSystemsJob(),
 			},
 
 			DataSourcesMap: map[string]*schema.Resource{
 				"graalsystems_project": dataSourceGraalSystemsProject(),
+				"graalsystems_identity": dataSourceGraalSystemsIdentity(),
+				"graalsystems_job": dataSourceGraalSystemsJob(),
 			},
 		}
 
