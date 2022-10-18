@@ -49,7 +49,6 @@ terraform {
   }
 }
 
-
 provider "graalsystems" {
   api_url = "https://api.graal.systems"
   auth_url = "https://identity.graal.systems"
@@ -58,26 +57,29 @@ provider "graalsystems" {
   password = "XXX"
 }
 
-resource "graalsystems_identity" "my_identity" {
-  name       = "my identity"
+resource "graalsystems_project" "my_project" {
+  name = "Example project"
+  description = "This is an example project"
 }
 
-resource "graalsystems_project" "my_project" {
-  name       = "my project"
+resource "graalsystems_identity" "my_identity" {
+  name = "my identity"
 }
 
 resource "graalsystems_job" "my_job" {
-  project_id  = my_project.id
-  identity_id  = my_identity.id
-  name        = "my job"
+  project_id = graalsystems_project.my_project.id
+  identity_id = graalsystems_identity.my_identity.id
+  name = "my job"
   description = "a useful description job"
-  tags        = ["spark", "just a tag"]
+  labels = {
+    "pipeline": "data-ingestion"
+  }
 
   spark {
+    instance_type = "Standard_General_G1_v1"
     main_class_name = "org.acme.MySparkJob"
   }
 }
-
 ```
 
 ## Authentication
