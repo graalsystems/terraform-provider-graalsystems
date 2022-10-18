@@ -19,7 +19,7 @@ func resourceGraalSystemsProject() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
 				Description: "The name of the project",
 			},
 			"description": {
@@ -41,10 +41,12 @@ func resourceGraalSystemsProjectCreate(ctx context.Context, d *schema.ResourceDa
 		Name:        &name,
 		Description: &description,
 	}
-	_, _, err := apiClient.ProjectApi.CreateProject(context.Background()).XTenant(meta.tenant).Project(*project).Execute()
+	result, _, err := apiClient.ProjectApi.CreateProject(context.Background()).XTenant(meta.tenant).Project(*project).Execute()
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	d.SetId(*result.Id)
 
 	return resourceGraalSystemsProjectRead(ctx, d, meta)
 }

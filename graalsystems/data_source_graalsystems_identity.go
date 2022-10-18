@@ -12,7 +12,6 @@ import (
 func dataSourceGraalSystemsIdentity() *schema.Resource {
 	dsSchema := datasourceSchemaFromResourceSchema(resourceGraalSystemsIdentity().Schema)
 
-	dsSchema["name"].ConflictsWith = []string{"identity_id"}
 	dsSchema["identity_id"] = &schema.Schema{
 		Type:        schema.TypeString,
 		Optional:    true,
@@ -38,17 +37,17 @@ func dataSourceGraalSystemsIdentityRead(ctx context.Context, d *schema.ResourceD
 		}
 		identity = p
 	} else {
-		identitys, _, err := apiClient.IdentityApi.FindIdentities(context.Background()).XTenant(meta.tenant).Execute()
+		identities, _, err := apiClient.IdentityApi.FindIdentities(context.Background()).XTenant(meta.tenant).Execute()
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		if len(identitys) == 0 {
+		if len(identities) == 0 {
 			return diag.FromErr(fmt.Errorf("no identity found with the name %s", d.Get("name")))
 		}
-		if len(identitys) > 1 {
-			return diag.FromErr(fmt.Errorf("%d identitys found with the same name %s", len(identitys), d.Get("name")))
+		if len(identities) > 1 {
+			return diag.FromErr(fmt.Errorf("%d identities found with the same name %s", len(identities), d.Get("name")))
 		}
-		identity = identitys[0]
+		identity = identities[0]
 	}
 
 	d.SetId(*identity.Id)

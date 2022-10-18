@@ -19,7 +19,7 @@ func resourceGraalSystemsIdentity() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
 				Description: "The name of the identity",
 			},
 			"description": {
@@ -41,10 +41,12 @@ func resourceGraalSystemsIdentityCreate(ctx context.Context, d *schema.ResourceD
 		Name:        &name,
 		Description: &description,
 	}
-	_, _, err := apiClient.IdentityApi.CreateIdentity(context.Background()).XTenant(meta.tenant).Identity(*identity).Execute()
+	result, _, err := apiClient.IdentityApi.CreateIdentity(context.Background()).XTenant(meta.tenant).Identity(*identity).Execute()
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	d.SetId(*result.Id)
 
 	return resourceGraalSystemsIdentityRead(ctx, d, meta)
 }

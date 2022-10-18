@@ -1,7 +1,7 @@
 ---
 page_title: "Provider: GraalSystems"
 description: |-
-The GraalSystems provider is used to manage GraalSystems resources. The provider needs to be configured with the proper credentials before it can be used.
+The GraalSystems provider is used to manage [GraalSystems](https://graal.systems) resources. The provider needs to be configured with the proper credentials before it can be used.
 ---
 
 # GraalSystems Provider
@@ -9,7 +9,7 @@ The GraalSystems provider is used to manage GraalSystems resources. The provider
 The GraalSystems provider is used to manage GraalSystems resources.
 The provider needs to be configured with the proper credentials before it can be used.
 
-**This is the documentation for the version `>= 1.0.0` of the provider.**
+**This is the documentation for the version `>= 1.0.4` of the provider.**
 
 Use the navigation to the left to read about the available resources.
 
@@ -40,16 +40,11 @@ You can test this config by creating a `test.tf` and run terraform commands from
 - Build the infrastructure: `terraform apply`
 
 ```hcl
-variable "project_id" {
-  type        = string
-  description = "Your project ID."
-}
-
 terraform {
   required_providers {
     graalsystems = {
       source = "graalsystems/graalsystems"
-      version = "1.0.3"
+      version = "1.0.4"
     }
   }
 }
@@ -87,7 +82,7 @@ resource "graalsystems_job" "my_job" {
 
 ## Authentication
 
-The GraalSystems authentication is based on an personal credentials or application credentials.
+The [GraalSystems](https://graal.systems) authentication is based on personal credentials or application credentials.
 
 The GraalSystems provider offers three ways of providing these credentials.
 The following methods are supported, in this priority order:

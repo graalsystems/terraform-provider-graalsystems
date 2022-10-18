@@ -19,13 +19,72 @@ func resourceGraalSystemsJob() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
 				Description: "The name of the job",
 			},
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "The description of the job",
+			},
+			"project_id": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The description of the job",
+			},
+			"timeout_seconds": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "The timeout of the job",
+			},
+			"identity_id": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The description of the job",
+			},
+			"labels": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "The labels associated with the job",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"spark": {
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				Optional:    true,
+				Description: "List of private network to connect with your instance",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"main_class_name": {
+							Type:        schema.TypeString,
+							Required:    true,
+						},
+						"instance_type": {
+							Type:        schema.TypeString,
+							Required:    true,
+						},
+					},
+				},
+			},
+			"tensorflow": {
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				Optional:    true,
+				Description: "List of private network to connect with your instance",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"number_replicas": {
+							Type:        schema.TypeInt,
+							Required:    true,
+						},
+						"instance_type": {
+							Type:        schema.TypeString,
+							Required:    true,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -42,10 +101,12 @@ func resourceGraalSystemsJobCreate(ctx context.Context, d *schema.ResourceData, 
 		Name:        &name,
 		Description: &description,
 	}
-	_, _, err := apiClient.ProjectApi.CreateJobForProject(context.Background(), projectId).XTenant(meta.tenant).Job(*job).Execute()
+	result, _, err := apiClient.ProjectApi.CreateJobForProject(context.Background(), projectId).XTenant(meta.tenant).Job(*job).Execute()
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	d.SetId(*result.Id)
 
 	return resourceGraalSystemsJobRead(ctx, d, meta)
 }

@@ -12,7 +12,6 @@ import (
 func dataSourceGraalSystemsProject() *schema.Resource {
 	dsSchema := datasourceSchemaFromResourceSchema(resourceGraalSystemsProject().Schema)
 
-	dsSchema["name"].ConflictsWith = []string{"project_id"}
 	dsSchema["project_id"] = &schema.Schema{
 		Type:        schema.TypeString,
 		Optional:    true,
