@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	sdk "github.com/graalsystems/sdk/go"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
@@ -144,15 +145,16 @@ func buildApi(ctx context.Context, apiUrl string, authUrl string, terraformVersi
 		URL: apiUrl,
 	})
 
+	tflog.Debug(ctx, fmt.Sprintf("looking for realm for tenant %s", tenant))
 	authUrl, err := findRealm(ctx, terraformVersion, servers, tenant, authUrl)
 	if err != nil {
 		return nil, err
 	}
 
+	tflog.Debug(ctx, fmt.Sprintf("using auth url %s", authUrl))
 	cfg := clientcredentials.Config{
-		ClientID:     username,
-		ClientSecret: password,
-		TokenURL:     authUrl,
+		ClientID: "graal-ui",
+		TokenURL: authUrl,
 	}
 
 	client := buildClient(cfg)
