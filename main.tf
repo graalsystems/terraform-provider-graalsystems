@@ -8,12 +8,13 @@ terraform {
 }
 
 provider "graalsystems" {
-  api_url = "http://172.24.240.1:4200/api/v1"
-  auth_url = "http://172.24.240.1:8089"
+  api_url = "http://172.27.0.1:4200/api/v1"
+  auth_url = "http://localhost:8089"
   tenant = "platform-vincent-internal"
-  //  auth_mode = "credentials"
+  auth_mode = "credentials"
   username = "vdevillers"
   password = "devillerspwd"
+  //  auth_mode = "application"
   //  application_id = "XXX-XXX-XXX"
   //  application_secret = "XXX-XXX-XXX"
 }

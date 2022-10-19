@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/clientcredentials"
 	"net/http"
 	"net/http/httptrace"
 	"os"
@@ -36,12 +37,22 @@ func Provider(config *ProviderConfig) plugin.ProviderFunc {
 				"username": {
 					Type:        schema.TypeString,
 					Optional:    true,
-					Description: "The username.",
+					Description: "The username (for credentials auth mode).",
 				},
 				"password": {
 					Type:        schema.TypeString,
-					Optional:    true, // To allow user to use deprecated `token`.
-					Description: "The password.",
+					Optional:    true,
+					Description: "The password (for credentials auth mode).",
+				},
+				"application_id": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The application id (for application auth mode).",
+				},
+				"application_secret": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "The application secret (for application auth mode).",
 				},
 				"tenant": {
 					Type:        schema.TypeString,
@@ -122,9 +133,12 @@ func buildMeta(ctx context.Context, config *metaConfig) (*Meta, error) {
 	authUrl := config.providerSchema.Get("auth_url").(string)
 	username := config.providerSchema.Get("username").(string)
 	password := config.providerSchema.Get("password").(string)
+	applicationId := config.providerSchema.Get("application_id").(string)
+	applicationSecret := config.providerSchema.Get("application_secret").(string)
+	authMode := config.providerSchema.Get("auth_mode").(string)
 	terraformVersion := config.terraformVersion
 
-	apiClient, err := buildApi(ctx, apiUrl, authUrl, terraformVersion, tenant, username, password)
+	apiClient, err := buildApi(ctx, apiUrl, authUrl, terraformVersion, tenant, username, password, applicationId, applicationSecret, authMode)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +149,7 @@ func buildMeta(ctx context.Context, config *metaConfig) (*Meta, error) {
 	}, nil
 }
 
-func buildApi(ctx context.Context, apiUrl string, authUrl string, terraformVersion string, tenant string, username string, password string) (*sdk.APIClient, error) {
+func buildApi(ctx context.Context, apiUrl string, authUrl string, terraformVersion string, tenant string, username string, password string, appId string, appSecret string, authMode string) (*sdk.APIClient, error) {
 	////
 	// Create GraalSystems SDK client
 	////
@@ -151,14 +165,27 @@ func buildApi(ctx context.Context, apiUrl string, authUrl string, terraformVersi
 	}
 
 	fmt.Printf("using auth url %s", authUrl)
-	cfg := oauth2.Config{
-		ClientID: "graal-ui",
-		Endpoint: oauth2.Endpoint{
-			TokenURL: authUrl,
-		},
-	}
 
-	client, _ := buildClient(ctx, cfg, username, password)
+	var client *http.Client
+
+	if authMode == "" || authMode == "credentials" {
+		cfg := oauth2.Config{
+			ClientID: "graal-ui",
+			Endpoint: oauth2.Endpoint{
+				TokenURL: authUrl,
+			},
+		}
+		client, _ = buildOAuth2ClientCredentials(ctx, cfg, username, password)
+	} else if authMode == "application" {
+		cfg := clientcredentials.Config{
+			ClientID:     appId,
+			ClientSecret: appSecret,
+			TokenURL:     authUrl,
+		}
+		client, _ = buildOAuth2ClientApplication(ctx, cfg)
+	} else {
+		return nil, errors.New(fmt.Sprintf("Invalid auth mode: %s", authMode))
+	}
 
 	configuration := sdk.Configuration{
 		UserAgent:  fmt.Sprintf("terraform-provider/%s terraform/%s", version, terraformVersion),
@@ -188,7 +215,7 @@ func findRealm(ctx context.Context, terraformVersion string, servers sdk.ServerC
 	return authUrl, nil
 }
 
-func buildClient(ctx context.Context, cfg oauth2.Config, username string, password string) (*http.Client, error) {
+func buildOAuth2ClientCredentials(ctx context.Context, cfg oauth2.Config, username string, password string) (*http.Client, error) {
 	token, err := cfg.PasswordCredentialsToken(ctx, username, password)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -201,18 +228,35 @@ func buildClient(ctx context.Context, cfg oauth2.Config, username string, passwo
 
 	var client *http.Client
 	if debug {
-		trace := &httptrace.ClientTrace{
-			GetConn:      func(hostPort string) { fmt.Println("starting to create conn", hostPort) },
-			DNSStart:     func(info httptrace.DNSStartInfo) { fmt.Println("starting to look up dns", info) },
-			DNSDone:      func(info httptrace.DNSDoneInfo) { fmt.Println("done looking up dns", info) },
-			ConnectStart: func(network, addr string) { fmt.Println("starting tcp connection", network, addr) },
-			ConnectDone:  func(network, addr string, err error) { fmt.Println("tcp connection created", network, addr, err) },
-			GotConn:      func(info httptrace.GotConnInfo) { fmt.Println("connection established", info) },
-		}
+		trace := buildClientTrace()
 		client = cfg.Client(httptrace.WithClientTrace(ctx, trace), token)
 	} else {
 		client = cfg.Client(ctx, token)
 	}
 	ctx = context.WithValue(ctx, oauth2.HTTPClient, client)
 	return client, nil
+}
+
+func buildOAuth2ClientApplication(ctx context.Context, cfg clientcredentials.Config) (*http.Client, error) {
+	var client *http.Client
+	if debug {
+		trace := buildClientTrace()
+		client = cfg.Client(httptrace.WithClientTrace(ctx, trace))
+	} else {
+		client = cfg.Client(ctx)
+	}
+	ctx = context.WithValue(ctx, oauth2.HTTPClient, client)
+	return client, nil
+}
+
+func buildClientTrace() *httptrace.ClientTrace {
+	trace := &httptrace.ClientTrace{
+		GetConn:      func(hostPort string) { fmt.Println("starting to create conn", hostPort) },
+		DNSStart:     func(info httptrace.DNSStartInfo) { fmt.Println("starting to look up dns", info) },
+		DNSDone:      func(info httptrace.DNSDoneInfo) { fmt.Println("done looking up dns", info) },
+		ConnectStart: func(network, addr string) { fmt.Println("starting tcp connection", network, addr) },
+		ConnectDone:  func(network, addr string, err error) { fmt.Println("tcp connection created", network, addr, err) },
+		GotConn:      func(info httptrace.GotConnInfo) { fmt.Println("connection established", info) },
+	}
+	return trace
 }
