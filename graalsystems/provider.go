@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	sdk "github.com/graalsystems/sdk/go"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
@@ -145,13 +144,13 @@ func buildApi(ctx context.Context, apiUrl string, authUrl string, terraformVersi
 		URL: apiUrl,
 	})
 
-	tflog.Debug(ctx, fmt.Sprintf("looking for realm for tenant %s", tenant))
+	fmt.Printf("looking for realm for tenant %s", tenant)
 	authUrl, err := findRealm(ctx, terraformVersion, servers, tenant, authUrl)
 	if err != nil {
 		return nil, err
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("using auth url %s", authUrl))
+	fmt.Printf("using auth url %s", authUrl)
 	cfg := oauth2.Config{
 		ClientID: "graal-ui",
 		Endpoint: oauth2.Endpoint{
@@ -194,6 +193,11 @@ func buildClient(ctx context.Context, cfg oauth2.Config, username string, passwo
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+
+	if !token.Valid() {
+		return nil, errors.New(fmt.Sprintf("Token invalid. Got: %#v", token))
+	}
+	//fmt.Printf("AccessToken = %q", token.AccessToken)
 
 	var client *http.Client
 	if debug {
