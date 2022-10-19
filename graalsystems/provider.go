@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
+	"github.com/pkg/errors"
 	"golang.org/x/oauth2/clientcredentials"
 	"net/http"
 	"net/http/httptrace"
@@ -116,24 +117,79 @@ type metaConfig struct {
 
 // providerConfigure creates the Meta object containing the SDK client.
 func buildMeta(ctx context.Context, config *metaConfig) (*Meta, error) {
+	tenant := config.providerSchema.Get("tenant").(string)
+	apiUrl := config.providerSchema.Get("api_url").(string)
+	authUrl := config.providerSchema.Get("auth_url").(string)
+	username := config.providerSchema.Get("username").(string)
+	password := config.providerSchema.Get("password").(string)
+	terraformVersion := config.terraformVersion
+
+	apiClient, err := buildApi(ctx, apiUrl, authUrl, terraformVersion, tenant, username, password)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Meta{
+		apiClient: apiClient,
+		tenant:    tenant,
+	}, nil
+}
+
+func buildApi(ctx context.Context, apiUrl string, authUrl string, terraformVersion string, tenant string, username string, password string) (*sdk.APIClient, error) {
 	////
 	// Create GraalSystems SDK client
 	////
 	servers := sdk.ServerConfigurations{}
 	servers = append(servers, sdk.ServerConfiguration{
-		URL: config.providerSchema.Get("api_url").(string),
+		URL: apiUrl,
 	})
 
-	cfg := clientcredentials.Config{
-		ClientID:     config.providerSchema.Get("username").(string),
-		ClientSecret: config.providerSchema.Get("password").(string),
-		TokenURL:     config.providerSchema.Get("auth_url").(string),
+	authUrl, err := findRealm(ctx, terraformVersion, servers, tenant, authUrl)
+	if err != nil {
+		return nil, err
 	}
 
+	cfg := clientcredentials.Config{
+		ClientID:     username,
+		ClientSecret: password,
+		TokenURL:     authUrl,
+	}
+
+	client := buildClient(cfg)
+
+	configuration := sdk.Configuration{
+		UserAgent:  fmt.Sprintf("terraform-provider/%s terraform/%s", version, terraformVersion),
+		Debug:      debug,
+		HTTPClient: client,
+		Servers:    servers,
+	}
+
+	apiClient := sdk.NewAPIClient(&configuration)
+	return apiClient, nil
+}
+
+func findRealm(ctx context.Context, terraformVersion string, servers sdk.ServerConfigurations, tenant string, authUrl string) (string, error) {
+	tmpClient := &http.Client{}
+	tmpConfiguration := sdk.Configuration{
+		UserAgent:  fmt.Sprintf("terraform-provider/%s terraform/%s", version, terraformVersion),
+		Debug:      debug,
+		HTTPClient: tmpClient,
+		Servers:    servers,
+	}
+	tmpApiClient := sdk.NewAPIClient(&tmpConfiguration)
+	t, _, err := tmpApiClient.TenantApi.FindRealmByTenantId(ctx, tenant).Execute()
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+	authUrl = authUrl + "/realms/" + *t.Realm + "/protocol/openid-connect/token"
+	return authUrl, nil
+}
+
+func buildClient(cfg clientcredentials.Config) *http.Client {
 	var client *http.Client
 	if debug {
 		trace := &httptrace.ClientTrace{
-			GetConn:      func(hostPort string) { fmt.Println("starting to create conn ", hostPort) },
+			GetConn:      func(hostPort string) { fmt.Println("starting to create conn", hostPort) },
 			DNSStart:     func(info httptrace.DNSStartInfo) { fmt.Println("starting to look up dns", info) },
 			DNSDone:      func(info httptrace.DNSDoneInfo) { fmt.Println("done looking up dns", info) },
 			ConnectStart: func(network, addr string) { fmt.Println("starting tcp connection", network, addr) },
@@ -144,18 +200,5 @@ func buildMeta(ctx context.Context, config *metaConfig) (*Meta, error) {
 	} else {
 		client = cfg.Client(context.Background())
 	}
-
-	configuration := sdk.Configuration{
-		UserAgent:  fmt.Sprintf("terraform-provider/%s terraform/%s", version, config.terraformVersion),
-		Debug:      debug,
-		HTTPClient: client,
-		Servers:    servers,
-	}
-
-	apiClient := sdk.NewAPIClient(&configuration)
-
-	return &Meta{
-		apiClient: apiClient,
-		tenant:    config.providerSchema.Get("tenant").(string),
-	}, nil
+	return client
 }

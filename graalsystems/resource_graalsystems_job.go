@@ -58,12 +58,12 @@ func resourceGraalSystemsJob() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"main_class_name": {
-							Type:        schema.TypeString,
-							Required:    true,
+							Type:     schema.TypeString,
+							Required: true,
 						},
 						"instance_type": {
-							Type:        schema.TypeString,
-							Required:    true,
+							Type:     schema.TypeString,
+							Required: true,
 						},
 					},
 				},
@@ -76,12 +76,12 @@ func resourceGraalSystemsJob() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"number_replicas": {
-							Type:        schema.TypeInt,
-							Required:    true,
+							Type:     schema.TypeInt,
+							Required: true,
 						},
 						"instance_type": {
-							Type:        schema.TypeString,
-							Required:    true,
+							Type:     schema.TypeString,
+							Required: true,
 						},
 					},
 				},
