@@ -142,7 +142,7 @@ var commonInitialisms = map[string]bool{
 	"XSS":   true,
 }
 
-// customInitialisms is a set of common initialisms we use at Scaleway.
+// customInitialisms is a set of common initialisms we use at GraalSystems.
 // value[0] is the uppercase replacement
 // value[1] is the lowercase replacement
 var customInitialisms = map[string][2]string{

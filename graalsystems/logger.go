@@ -6,7 +6,7 @@ import (
 
 // logger is the implementation of the SDK Logger interface for this terraform plugin.
 //
-// cf. https://godoc.org/github.com/scaleway/scaleway-sdk-go/logger#Logger
+// cf. https://godoc.org/github.com/graalsystems/graalsystems-sdk-go/logger#Logger
 type logger struct{}
 
 // l is the global logger singleton

@@ -37,7 +37,7 @@ website/vendor
 # Local release artifacts
 dist/
 
-terraform-provider-scaleway
+terraform-provider-graalsystems
 
 # Lego ACME client
 .lego/

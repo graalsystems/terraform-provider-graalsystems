@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 	"github.com/pkg/errors"
-	"golang.org/x/oauth2/clientcredentials"
+	"golang.org/x/oauth2"
 	"net/http"
 	"net/http/httptrace"
 	"os"
@@ -152,12 +152,14 @@ func buildApi(ctx context.Context, apiUrl string, authUrl string, terraformVersi
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("using auth url %s", authUrl))
-	cfg := clientcredentials.Config{
+	cfg := oauth2.Config{
 		ClientID: "graal-ui",
-		TokenURL: authUrl,
+		Endpoint: oauth2.Endpoint{
+			TokenURL: authUrl,
+		},
 	}
 
-	client := buildClient(cfg)
+	client, _ := buildClient(ctx, cfg, username, password)
 
 	configuration := sdk.Configuration{
 		UserAgent:  fmt.Sprintf("terraform-provider/%s terraform/%s", version, terraformVersion),
@@ -187,7 +189,12 @@ func findRealm(ctx context.Context, terraformVersion string, servers sdk.ServerC
 	return authUrl, nil
 }
 
-func buildClient(cfg clientcredentials.Config) *http.Client {
+func buildClient(ctx context.Context, cfg oauth2.Config, username string, password string) (*http.Client, error) {
+	token, err := cfg.PasswordCredentialsToken(ctx, username, password)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
 	var client *http.Client
 	if debug {
 		trace := &httptrace.ClientTrace{
@@ -198,9 +205,10 @@ func buildClient(cfg clientcredentials.Config) *http.Client {
 			ConnectDone:  func(network, addr string, err error) { fmt.Println("tcp connection created", network, addr, err) },
 			GotConn:      func(info httptrace.GotConnInfo) { fmt.Println("connection established", info) },
 		}
-		client = cfg.Client(httptrace.WithClientTrace(context.Background(), trace))
+		client = cfg.Client(httptrace.WithClientTrace(ctx, trace), token)
 	} else {
-		client = cfg.Client(context.Background())
+		client = cfg.Client(ctx, token)
 	}
-	return client
+	ctx = context.WithValue(ctx, oauth2.HTTPClient, client)
+	return client, nil
 }
