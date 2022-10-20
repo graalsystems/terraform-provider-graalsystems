@@ -80,12 +80,16 @@ func Provider(config *ProviderConfig) plugin.ProviderFunc {
 				"graalsystems_project":  resourceGraalSystemsProject(),
 				"graalsystems_identity": resourceGraalSystemsIdentity(),
 				"graalsystems_job":      resourceGraalSystemsJob(),
+				"graalsystems_user":     resourceGraalSystemsUser(),
+				"graalsystems_group":    resourceGraalSystemsGroup(),
 			},
 
 			DataSourcesMap: map[string]*schema.Resource{
 				"graalsystems_project":  dataSourceGraalSystemsProject(),
 				"graalsystems_identity": dataSourceGraalSystemsIdentity(),
 				"graalsystems_job":      dataSourceGraalSystemsJob(),
+				"graalsystems_user":     dataSourceGraalSystemsUser(),
+				"graalsystems_group":    dataSourceGraalSystemsGroup(),
 			},
 		}
 

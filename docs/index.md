@@ -94,7 +94,7 @@ The following methods are supported, in this priority order:
 
 ### Environment variables
 
-!> **Warning**: Not released yet
+!> **Warning** Not released yet
 
 You can provide your credentials via the `GS_USERNAME`, `GS_PASSWORD` environment variables.
 
@@ -114,9 +114,9 @@ $ terraform plan
 
 ### Static credentials
 
-!> **Warning**: Hard-coding credentials into any Terraform configuration is not recommended, and risks secret leakage should this file ever be committed to a public version control system.
+!> **Warning** Hard-coding credentials into any Terraform configuration is not recommended, and risks secret leakage should this file ever be committed to a public version control system.
 
-Static credentials can be provided by adding `access_key` and `secret_key` attributes in-line in the GraalSystems provider block:
+Static credentials can be provided by adding `username` and `password` (for auth mode ```credentials```) or `application_id` and `application_secret` (for auth mode ```application```) attributes in-line in the GraalSystems provider block:
 
 Example:
 
@@ -124,6 +124,17 @@ Example:
 provider "graalsystems" {
   username = "XXX"
   password = "XXX"
+  auth_mode = "credentials"
+}
+```
+
+Or
+
+```hcl
+provider "graalsystems" {
+  application_id = "XXX"
+  application_secret = "XXX"
+  auth_mode = "application"
 }
 ```
 
@@ -133,11 +144,14 @@ In addition to [generic provider arguments](https://www.terraform.io/docs/config
 
 | Provider Argument | [Environment Variables](#environment-variables) | Description                                                                                                                             | Mandatory |
 |-------------------|-------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|-----------|
-| `username`      | `GS_USERNAME`                                | [GraalSystems username](https://console.graal.systems)                                                                 | ✅        |
-| `password`      | `GS_PASSWORD`                                | [GraalSystems password](https://console.graal.systems)                                                                 | ✅        |
+| `username`      | `GS_USERNAME`                                | [username](https://console.graal.systems)                                                                 | ✅        |
+| `password`      | `GS_PASSWORD`                                | [password](https://console.graal.systems)                                                                 | ✅        |
+| `application_id`      | `GS_APPLICATION_ID`                                | [Application Id](https://console.graal.systems)                                                                 | ✅        |
+| `application_secret`      | `GS_APPLICATION_SECRET`                                | [Application Secret](https://console.graal.systems)                                                                 | ✅        |
 | `tenant`      | `GS_TENANT`                        | The [tenant ID](https://console.graal.systems/profile) that will be used as default value for all resources.                   | ✅        |
 | `api_url`      | `GS_API_URL`                        |                    |         |
 | `auth_url`      | `GS_AUTH_URL`                        |     |         |
+| `auth_mode`      | `GS_AUTH_MODE`                        | ```credentials``` or ```application```    |         |
 
 ## Debugging a deployment
 

@@ -7,7 +7,7 @@ Manages GraalSystems Projects.
 # graalsystems_project
 
 Creates and manages GraalSystems Projects.
-For more information see [the documentation](https://docs.graal.systems/).
+For more information see [the documentation](https://docs.dev.graal.systems/).
 
 ## Examples
 
