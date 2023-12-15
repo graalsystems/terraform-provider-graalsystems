@@ -50,7 +50,7 @@ terraform {
 }
 
 provider "graalsystems" {
-  api_url = "https://api.graal.systems"
+  api_url = "https://api.graal.systems/api/v1"
   auth_url = "https://identity.graal.systems"
   tenant = "XXX"
   username = "XXX"
