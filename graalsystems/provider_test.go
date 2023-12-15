@@ -3,9 +3,10 @@ package graalsystems
 import (
 	"context"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"log"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestProvider_BuildApiWithCredentials(t *testing.T) {
@@ -17,7 +18,7 @@ func TestProvider_BuildApiWithCredentials(t *testing.T) {
 		log.Fatal(err)
 	}
 	assert.NotNil(t, api)
-	projects, response, err := api.ProjectApi.FindProjects(ctx).XTenant("platform-vincent-internal").Execute()
+	projects, response, err := api.ProjectAPI.FindProjects(ctx).XTenant("platform-vincent-internal").Execute()
 	fmt.Println("Err", err)
 	assert.Nil(t, err)
 	if err != nil {

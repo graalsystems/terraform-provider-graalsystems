@@ -2,7 +2,8 @@ package graalsystems
 
 import (
 	"context"
-	"github.com/graalsystems/sdk/go"
+
+	sdk "github.com/graalsystems/sdk/go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -38,10 +39,10 @@ func resourceGraalSystemsUserCreate(ctx context.Context, d *schema.ResourceData,
 	username := d.Get("username").(string)
 	description := d.Get("description").(string)
 	user := &sdk.User{
-		Username:        &username,
+		Username:    &username,
 		Description: &description,
 	}
-	result, _, err := apiClient.UserApi.CreateUser(context.Background()).XTenant(meta.tenant).User(*user).Execute()
+	result, _, err := apiClient.UserAPI.CreateUser(context.Background()).XTenant(meta.tenant).User(*user).Execute()
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -55,7 +56,7 @@ func resourceGraalSystemsUserRead(ctx context.Context, d *schema.ResourceData, m
 	meta := m.(*Meta)
 	apiClient := meta.apiClient
 
-	res, _, err := apiClient.UserApi.FindUserById(context.Background(), d.Id()).XTenant(meta.tenant).Execute()
+	res, _, err := apiClient.UserAPI.FindUserById(context.Background(), d.Id()).XTenant(meta.tenant).Execute()
 	if err != nil {
 		if is404Error(err) {
 			d.SetId("")
@@ -83,10 +84,10 @@ func resourceGraalSystemsUserUpdate(ctx context.Context, d *schema.ResourceData,
 		patch := &sdk.Patch{
 			Op:    nil,
 			Path:  &path,
-			Value: &value,
+			Value: value,
 		}
 		patchs := &[]sdk.Patch{*patch}
-		_, _, err := apiClient.UserApi.UpdateUser(context.Background(), d.Id()).XTenant(meta.tenant).Patch(*patchs).Execute()
+		_, _, err := apiClient.UserAPI.UpdateUser(context.Background(), d.Id()).XTenant(meta.tenant).Patch(*patchs).Execute()
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -99,7 +100,7 @@ func resourceGraalSystemsUserDelete(ctx context.Context, d *schema.ResourceData,
 	meta := m.(*Meta)
 	apiClient := meta.apiClient
 
-	_, err := apiClient.UserApi.DeleteUserById(context.Background(), d.Id()).XTenant(meta.tenant).Execute()
+	_, err := apiClient.UserAPI.DeleteUserById(context.Background(), d.Id()).XTenant(meta.tenant).Execute()
 	if err != nil && !is404Error(err) {
 		return diag.FromErr(err)
 	}

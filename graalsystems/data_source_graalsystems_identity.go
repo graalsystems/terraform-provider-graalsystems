@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/graalsystems/sdk/go"
+	sdk "github.com/graalsystems/sdk/go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -31,13 +31,13 @@ func dataSourceGraalSystemsIdentityRead(ctx context.Context, d *schema.ResourceD
 	var identity sdk.Identity
 	identityId, ok := d.Get("identity_id").(string)
 	if ok {
-		p, _, err := apiClient.IdentityApi.FindIdentityById(context.Background(), identityId).XTenant(meta.tenant).Execute()
+		p, _, err := apiClient.IdentityAPI.FindIdentityById(context.Background(), identityId).XTenant(meta.tenant).Execute()
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		identity = p
+		identity = *p
 	} else {
-		identities, _, err := apiClient.IdentityApi.FindIdentities(context.Background()).XTenant(meta.tenant).Execute()
+		identities, _, err := apiClient.IdentityAPI.FindIdentities(context.Background()).XTenant(meta.tenant).Execute()
 		if err != nil {
 			return diag.FromErr(err)
 		}

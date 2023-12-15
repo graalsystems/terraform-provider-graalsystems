@@ -2,7 +2,8 @@ package graalsystems
 
 import (
 	"context"
-	"github.com/graalsystems/sdk/go"
+
+	sdk "github.com/graalsystems/sdk/go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -41,7 +42,7 @@ func resourceGraalSystemsGroupCreate(ctx context.Context, d *schema.ResourceData
 		Name:        &name,
 		Description: &description,
 	}
-	result, _, err := apiClient.GroupApi.CreateGroup(context.Background()).XTenant(meta.tenant).Group(*project).Execute()
+	result, _, err := apiClient.GroupAPI.CreateGroup(context.Background()).XTenant(meta.tenant).Group(*project).Execute()
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -55,7 +56,7 @@ func resourceGraalSystemsGroupRead(ctx context.Context, d *schema.ResourceData, 
 	meta := m.(*Meta)
 	apiClient := meta.apiClient
 
-	res, _, err := apiClient.GroupApi.FindGroupById(context.Background(), d.Id()).XTenant(meta.tenant).Execute()
+	res, _, err := apiClient.GroupAPI.FindGroupById(context.Background(), d.Id()).XTenant(meta.tenant).Execute()
 	if err != nil {
 		if is404Error(err) {
 			d.SetId("")
@@ -86,7 +87,7 @@ func resourceGraalSystemsGroupUpdate(ctx context.Context, d *schema.ResourceData
 	//		Value: &value,
 	//	}
 	//	patchs := &[]sdk.Patch{*patch}
-	//	_, _, err := apiClient.GroupApi.UpdateGroup(context.Background(), d.Id()).XTenant(meta.tenant).Patch(*patchs).Execute()
+	//	_, _, err := apiClient.GroupAPI.UpdateGroup(context.Background(), d.Id()).XTenant(meta.tenant).Patch(*patchs).Execute()
 	//	if err != nil {
 	//		return diag.FromErr(err)
 	//	}
@@ -99,7 +100,7 @@ func resourceGraalSystemsGroupDelete(ctx context.Context, d *schema.ResourceData
 	meta := m.(*Meta)
 	apiClient := meta.apiClient
 
-	_, err := apiClient.GroupApi.DeleteGroupById(context.Background(), d.Id()).XTenant(meta.tenant).Execute()
+	_, err := apiClient.GroupAPI.DeleteGroupById(context.Background(), d.Id()).XTenant(meta.tenant).Execute()
 	if err != nil && !is404Error(err) {
 		return diag.FromErr(err)
 	}

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/graalsystems/sdk/go"
+	sdk "github.com/graalsystems/sdk/go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -31,13 +31,13 @@ func dataSourceGraalSystemsGroupRead(ctx context.Context, d *schema.ResourceData
 	var group sdk.Group
 	groupId, ok := d.Get("group_id").(string)
 	if ok {
-		p, _, err := apiClient.GroupApi.FindGroupById(context.Background(), groupId).XTenant(meta.tenant).Execute()
+		p, _, err := apiClient.GroupAPI.FindGroupById(context.Background(), groupId).XTenant(meta.tenant).Execute()
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		group = p
+		group = *p
 	} else {
-		groups, _, err := apiClient.GroupApi.FindGroups(context.Background()).XTenant(meta.tenant).Execute()
+		groups, _, err := apiClient.GroupAPI.FindGroups(context.Background()).XTenant(meta.tenant).Execute()
 		if err != nil {
 			return diag.FromErr(err)
 		}

@@ -2,7 +2,8 @@ package graalsystems
 
 import (
 	"context"
-	"github.com/graalsystems/sdk/go"
+
+	sdk "github.com/graalsystems/sdk/go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -41,7 +42,7 @@ func resourceGraalSystemsProjectCreate(ctx context.Context, d *schema.ResourceDa
 		Name:        &name,
 		Description: &description,
 	}
-	result, _, err := apiClient.ProjectApi.CreateProject(context.Background()).XTenant(meta.tenant).Project(*project).Execute()
+	result, _, err := apiClient.ProjectAPI.CreateProject(context.Background()).XTenant(meta.tenant).Project(*project).Execute()
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -55,7 +56,7 @@ func resourceGraalSystemsProjectRead(ctx context.Context, d *schema.ResourceData
 	meta := m.(*Meta)
 	apiClient := meta.apiClient
 
-	res, _, err := apiClient.ProjectApi.FindProjectById(context.Background(), d.Id()).XTenant(meta.tenant).Execute()
+	res, _, err := apiClient.ProjectAPI.FindProjectById(context.Background(), d.Id()).XTenant(meta.tenant).Execute()
 	if err != nil {
 		if is404Error(err) {
 			d.SetId("")
@@ -83,10 +84,10 @@ func resourceGraalSystemsProjectUpdate(ctx context.Context, d *schema.ResourceDa
 		patch := &sdk.Patch{
 			Op:    nil,
 			Path:  &path,
-			Value: &value,
+			Value: value,
 		}
 		patchs := &[]sdk.Patch{*patch}
-		_, _, err := apiClient.ProjectApi.UpdateProject(context.Background(), d.Id()).XTenant(meta.tenant).Patch(*patchs).Execute()
+		_, _, err := apiClient.ProjectAPI.UpdateProject(context.Background(), d.Id()).XTenant(meta.tenant).Patch(*patchs).Execute()
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -99,7 +100,7 @@ func resourceGraalSystemsProjectDelete(ctx context.Context, d *schema.ResourceDa
 	meta := m.(*Meta)
 	apiClient := meta.apiClient
 
-	_, err := apiClient.ProjectApi.DeleteProjectById(context.Background(), d.Id()).XTenant(meta.tenant).Execute()
+	_, err := apiClient.ProjectAPI.DeleteProjectById(context.Background(), d.Id()).XTenant(meta.tenant).Execute()
 	if err != nil && !is404Error(err) {
 		return diag.FromErr(err)
 	}

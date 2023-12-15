@@ -3,6 +3,10 @@ package graalsystems
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/http/httptrace"
+	"os"
+
 	sdk "github.com/graalsystems/sdk/go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -10,9 +14,6 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
-	"net/http"
-	"net/http/httptrace"
-	"os"
 )
 
 var debug = os.Getenv("GS_DEBUG") != ""
@@ -162,13 +163,13 @@ func buildApi(ctx context.Context, apiUrl string, authUrl string, terraformVersi
 		URL: apiUrl,
 	})
 
-	fmt.Printf("looking for realm for tenant %s", tenant)
+	// fmt.Printf("looking for realm for tenant %s\n", tenant)
 	authUrl, err := findRealm(ctx, terraformVersion, servers, tenant, authUrl)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Printf("using auth url %s", authUrl)
+	// fmt.Printf("using auth url %s\n", authUrl)
 
 	var client *http.Client
 
@@ -211,7 +212,7 @@ func findRealm(ctx context.Context, terraformVersion string, servers sdk.ServerC
 		Servers:    servers,
 	}
 	tmpApiClient := sdk.NewAPIClient(&tmpConfiguration)
-	t, _, err := tmpApiClient.TenantApi.FindRealmByTenantId(ctx, tenant).Execute()
+	t, _, err := tmpApiClient.TenantAPI.FindRealmByTenantId(ctx, tenant).Execute()
 	if err != nil {
 		return "", errors.WithStack(err)
 	}

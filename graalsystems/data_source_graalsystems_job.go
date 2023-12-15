@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/graalsystems/sdk/go"
+	sdk "github.com/graalsystems/sdk/go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -31,13 +31,13 @@ func dataSourceGraalSystemsJobRead(ctx context.Context, d *schema.ResourceData, 
 	var job sdk.Job
 	jobId, ok := d.Get("job_id").(string)
 	if ok {
-		p, _, err := apiClient.JobApi.FindJobByJobId(context.Background(), jobId).XTenant(meta.tenant).Execute()
+		p, _, err := apiClient.JobAPI.FindJobByJobId(context.Background(), jobId).XTenant(meta.tenant).Execute()
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		job = p
+		job = *p
 	} else {
-		jobs, _, err := apiClient.JobApi.FindJobs(context.Background()).XTenant(meta.tenant).Execute()
+		jobs, _, err := apiClient.JobAPI.FindJobs(context.Background()).XTenant(meta.tenant).Execute()
 		if err != nil {
 			return diag.FromErr(err)
 		}

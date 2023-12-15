@@ -2,7 +2,8 @@ package graalsystems
 
 import (
 	"context"
-	"github.com/graalsystems/sdk/go"
+
+	sdk "github.com/graalsystems/sdk/go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -101,7 +102,7 @@ func resourceGraalSystemsJobCreate(ctx context.Context, d *schema.ResourceData, 
 		Name:        &name,
 		Description: &description,
 	}
-	result, _, err := apiClient.ProjectApi.CreateJobForProject(context.Background(), projectId).XTenant(meta.tenant).Job(*job).Execute()
+	result, _, err := apiClient.ProjectAPI.CreateJobForProject(context.Background(), projectId).XTenant(meta.tenant).Job(*job).Execute()
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -115,7 +116,7 @@ func resourceGraalSystemsJobRead(ctx context.Context, d *schema.ResourceData, m 
 	meta := m.(*Meta)
 	apiClient := meta.apiClient
 
-	res, _, err := apiClient.JobApi.FindJobByJobId(context.Background(), d.Id()).XTenant(meta.tenant).Execute()
+	res, _, err := apiClient.JobAPI.FindJobByJobId(context.Background(), d.Id()).XTenant(meta.tenant).Execute()
 	if err != nil {
 		if is404Error(err) {
 			d.SetId("")
@@ -143,10 +144,10 @@ func resourceGraalSystemsJobUpdate(ctx context.Context, d *schema.ResourceData, 
 		patch := &sdk.Patch{
 			Op:    nil,
 			Path:  &path,
-			Value: &value,
+			Value: value,
 		}
 		patchs := &[]sdk.Patch{*patch}
-		_, _, err := apiClient.JobApi.UpdateJob(context.Background(), d.Id()).XTenant(meta.tenant).Patch(*patchs).Execute()
+		_, _, err := apiClient.JobAPI.UpdateJob(context.Background(), d.Id()).XTenant(meta.tenant).Patch(*patchs).Execute()
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -159,7 +160,7 @@ func resourceGraalSystemsJobDelete(ctx context.Context, d *schema.ResourceData, 
 	meta := m.(*Meta)
 	apiClient := meta.apiClient
 
-	_, err := apiClient.JobApi.DeleteJobById(context.Background(), d.Id()).XTenant(meta.tenant).Execute()
+	_, err := apiClient.JobAPI.DeleteJobById(context.Background(), d.Id()).XTenant(meta.tenant).Execute()
 	if err != nil && !is404Error(err) {
 		return diag.FromErr(err)
 	}

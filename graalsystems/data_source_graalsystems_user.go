@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/graalsystems/sdk/go"
+	sdk "github.com/graalsystems/sdk/go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -31,13 +31,13 @@ func dataSourceGraalSystemsUserRead(ctx context.Context, d *schema.ResourceData,
 	var user sdk.User
 	userId, ok := d.Get("user_id").(string)
 	if ok {
-		p, _, err := apiClient.UserApi.FindUserById(context.Background(), userId).XTenant(meta.tenant).Execute()
+		p, _, err := apiClient.UserAPI.FindUserById(context.Background(), userId).XTenant(meta.tenant).Execute()
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		user = p
+		user = *p
 	} else {
-		users, _, err := apiClient.UserApi.FindUsers(context.Background()).XTenant(meta.tenant).Execute()
+		users, _, err := apiClient.UserAPI.FindUsers(context.Background()).XTenant(meta.tenant).Execute()
 		if err != nil {
 			return diag.FromErr(err)
 		}

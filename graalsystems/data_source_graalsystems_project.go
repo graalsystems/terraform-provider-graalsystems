@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/graalsystems/sdk/go"
+	sdk "github.com/graalsystems/sdk/go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -31,13 +31,13 @@ func dataSourceGraalSystemsProjectRead(ctx context.Context, d *schema.ResourceDa
 	var project sdk.Project
 	projectId, ok := d.Get("project_id").(string)
 	if ok {
-		p, _, err := apiClient.ProjectApi.FindProjectById(context.Background(), projectId).XTenant(meta.tenant).Execute()
+		p, _, err := apiClient.ProjectAPI.FindProjectById(context.Background(), projectId).XTenant(meta.tenant).Execute()
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		project = p
+		project = *p
 	} else {
-		projects, _, err := apiClient.ProjectApi.FindProjects(context.Background()).XTenant(meta.tenant).Execute()
+		projects, _, err := apiClient.ProjectAPI.FindProjects(context.Background()).XTenant(meta.tenant).Execute()
 		if err != nil {
 			return diag.FromErr(err)
 		}
