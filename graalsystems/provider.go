@@ -163,13 +163,10 @@ func buildApi(ctx context.Context, apiUrl string, authUrl string, terraformVersi
 		URL: apiUrl,
 	})
 
-	// fmt.Printf("looking for realm for tenant %s\n", tenant)
 	authUrl, err := findRealm(ctx, terraformVersion, servers, tenant, authUrl)
 	if err != nil {
 		return nil, err
 	}
-
-	// fmt.Printf("using auth url %s\n", authUrl)
 
 	var client *http.Client
 
@@ -229,7 +226,6 @@ func buildOAuth2ClientCredentials(ctx context.Context, cfg oauth2.Config, userna
 	if !token.Valid() {
 		return nil, errors.New(fmt.Sprintf("Token invalid. Got: %#v", token))
 	}
-	//fmt.Printf("AccessToken = %q", token.AccessToken)
 
 	var client *http.Client
 	if debug {
@@ -251,6 +247,10 @@ func buildOAuth2ClientApplication(ctx context.Context, cfg clientcredentials.Con
 		client = cfg.Client(ctx)
 	}
 	ctx = context.WithValue(ctx, oauth2.HTTPClient, client)
+	_, err := cfg.Token(ctx)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
 	return client, nil
 }
 
