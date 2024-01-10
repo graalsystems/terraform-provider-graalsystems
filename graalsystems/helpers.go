@@ -41,6 +41,22 @@ func is404Error(err error) bool {
 	return isHTTPCodeError(err, http.StatusNotFound)
 }
 
+func toStringList(input []interface{}) []string {
+	var output []string
+	for _, v := range input {
+		output = append(output, v.(string))
+	}
+	return output
+}
+
+func toStringMap(input map[string]interface{}) map[string]string {
+	output := make(map[string]string)
+	for k, v := range input {
+		output[k] = v.(string)
+	}
+	return output
+}
+
 //func is412Error(err error) bool {
 //	return isHTTPCodeError(err, http.StatusPreconditionFailed)
 //}
