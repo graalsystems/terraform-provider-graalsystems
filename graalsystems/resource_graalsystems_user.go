@@ -78,13 +78,12 @@ func resourceGraalSystemsUserUpdate(ctx context.Context, d *schema.ResourceData,
 	if d.HasChange("username") {
 		path := "/username"
 
-		value := make(map[string]interface{})
-		value["username"] = d.Get("username").(string)
+		value := d.Get("username").(string)
 
 		patch := &sdk.Patch{
 			Op:    nil,
 			Path:  &path,
-			Value: value,
+			Value: &value,
 		}
 		patchs := &[]sdk.Patch{*patch}
 		_, _, err := apiClient.UserAPI.UpdateUser(context.Background(), d.Id()).XTenant(meta.tenant).Patch(*patchs).Execute()

@@ -145,18 +145,25 @@ func resourceGraalSystemsWorkspaceRead(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
+// patchFromResourceData creates a patch from a resource data
 func patchFromResourceData(d *schema.ResourceData, patchElement string) *sdk.Patch {
 	path := "/" + patchElement
-	value := make(map[string]interface{})
-	value[patchElement] = d.Get(patchElement).(string)
-	operation := "replace"
-	return &sdk.Patch{Op: &operation, Path: &path, Value: value}
+	value := d.Get(patchElement).(string)
+	op := "replace"
+	if err := validatePatchOperation(&op); err == nil {
+		return &sdk.Patch{Op: &op, Path: &path, Value: &value}
+	}
+	return nil
 }
 
 func resourceGraalSystemsWorkspaceUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := m.(*Meta)
 	apiClient := meta.apiClient
-	//TODO: fix this deserialization issue
+
+	if d.HasChange("type") || d.HasChange("infrastructure_id") || d.HasChange("instance_type") {
+		return diag.FromErr(fmt.Errorf("once created, you cannot change the following workspace properties: " +
+			"['type', 'infrastructure_id', 'instance_type'] \nDelete the workspace and create a new one"))
+	}
 
 	if d.HasChange("name") {
 		_, _, err := apiClient.WorkspaceAPI.UpdateWorkspace(context.Background(), d.Id()).XTenant(meta.tenant).Patch([]sdk.Patch{*patchFromResourceData(d, "name")}).Execute()
@@ -172,31 +179,11 @@ func resourceGraalSystemsWorkspaceUpdate(ctx context.Context, d *schema.Resource
 		}
 	}
 
-	if d.HasChange("type") {
-		_, _, err := apiClient.WorkspaceAPI.UpdateWorkspace(context.Background(), d.Id()).XTenant(meta.tenant).Patch([]sdk.Patch{*patchFromResourceData(d, "type")}).Execute()
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-
-	if d.HasChange("infrastructure_id") {
-		_, _, err := apiClient.WorkspaceAPI.UpdateWorkspace(context.Background(), d.Id()).XTenant(meta.tenant).Patch([]sdk.Patch{*patchFromResourceData(d, "infrastructure_id")}).Execute()
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-
-	if d.HasChange("instance_type") {
-		_, _, err := apiClient.WorkspaceAPI.UpdateWorkspace(context.Background(), d.Id()).XTenant(meta.tenant).Patch([]sdk.Patch{*patchFromResourceData(d, "instance_type")}).Execute()
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-
-	return resourceGraalSystemsJobRead(ctx, d, meta)
+	return resourceGraalSystemsWorkspaceRead(ctx, d, meta)
 }
 
-func resourceGraalSystemsWorkspaceDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+// resourceGraalSystemsWorkspaceDelete deletes a workspace
+func resourceGraalSystemsWorkspaceDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := m.(*Meta)
 	apiClient := meta.apiClient
 
