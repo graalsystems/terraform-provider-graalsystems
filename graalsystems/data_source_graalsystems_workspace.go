@@ -80,6 +80,7 @@ func dataSourceGraalSystemsWorkspaceRead(ctx context.Context, d *schema.Resource
 			if len(matches) > 1 {
 				return diag.FromErr(fmt.Errorf("%d workspaces exist with the same name %s. You can filter them by their id", len(matches), name))
 			}
+			filteredWorkspace = &matches[0]
 			// Retrieving additional information about the workspace
 			if space, _, err := apiClient.WorkspaceAPI.FindWorkspaceById(context.Background(), *filteredWorkspace.Id).XTenant(meta.tenant).Execute(); err != nil {
 				return diag.FromErr(err)
