@@ -1,8 +1,10 @@
 package graalsystems
 
 import (
+	"fmt"
 	sdk "github.com/graalsystems/sdk/go"
 	"net/http"
+	"slices"
 	"strconv"
 )
 import "errors"
@@ -20,7 +22,7 @@ import "errors"
 //		SetId(string)
 //		Id() string
 //	}
-//
+
 // isHTTPCodeError returns true if err is an http error with code statusCode
 func isHTTPCodeError(err error, statusCode int) bool {
 	if err == nil {
@@ -41,6 +43,7 @@ func is404Error(err error) bool {
 	return isHTTPCodeError(err, http.StatusNotFound)
 }
 
+// toStringList converts a list of interfaces to a list of strings
 func toStringList(input []interface{}) []string {
 	var output []string
 	for _, v := range input {
@@ -49,12 +52,22 @@ func toStringList(input []interface{}) []string {
 	return output
 }
 
+// toStringMap converts a map of interfaces to a map of strings
 func toStringMap(input map[string]interface{}) map[string]string {
 	output := make(map[string]string)
 	for k, v := range input {
 		output[k] = v.(string)
 	}
 	return output
+}
+
+func validatePatchOperation(operation *string) error {
+	operations := []string{"add", "replace", "remove", "move", "copy", "test"}
+	if slices.Contains(operations, *operation) {
+		return nil
+	} else {
+		return fmt.Errorf("invalid patch operation: %s", *operation)
+	}
 }
 
 //func is412Error(err error) bool {

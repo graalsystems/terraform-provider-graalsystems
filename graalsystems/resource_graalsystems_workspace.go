@@ -19,6 +19,8 @@ const (
 
 var workspaceTypes = []string{workspaceTypeJupyter, workspaceTypeMetabase, workspaceTypeSuperset, workspaceTypeVsCode, workspaceTypeZeppelin}
 
+// resourceGraalSystemsWorkspace defines the schema for the workspace resource
+// It also implements the CRUD methods
 func resourceGraalSystemsWorkspace() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceGraalSystemsWorkspaceCreate,
@@ -84,6 +86,7 @@ func resourceGraalSystemsWorkspace() *schema.Resource {
 	}
 }
 
+// resourceGraalSystemsWorkspaceCreate creates a workspace
 func resourceGraalSystemsWorkspaceCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := m.(*Meta)
 	apiClient := meta.apiClient
@@ -117,7 +120,8 @@ func resourceGraalSystemsWorkspaceCreate(ctx context.Context, d *schema.Resource
 	return resourceGraalSystemsWorkspaceRead(ctx, d, meta)
 }
 
-func resourceGraalSystemsWorkspaceRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+// resourceGraalSystemsWorkspaceRead reads a workspace
+func resourceGraalSystemsWorkspaceRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := m.(*Meta)
 	apiClient := meta.apiClient
 
@@ -156,6 +160,7 @@ func patchFromResourceData(d *schema.ResourceData, patchElement string) *sdk.Pat
 	return nil
 }
 
+// resourceGraalSystemsWorkspaceUpdate updates a workspace
 func resourceGraalSystemsWorkspaceUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := m.(*Meta)
 	apiClient := meta.apiClient
