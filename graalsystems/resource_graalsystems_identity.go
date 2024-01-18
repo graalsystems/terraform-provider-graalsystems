@@ -78,13 +78,12 @@ func resourceGraalSystemsIdentityUpdate(ctx context.Context, d *schema.ResourceD
 	if d.HasChange("name") {
 		path := "/name"
 
-		value := make(map[string]interface{})
-		value["name"] = d.Get("name").(string)
+		value := d.Get("name").(string)
 
 		patch := &sdk.Patch{
 			Op:    nil,
 			Path:  &path,
-			Value: value,
+			Value: &value,
 		}
 		patchs := &[]sdk.Patch{*patch}
 		_, _, err := apiClient.IdentityAPI.UpdateIdentity(context.Background(), d.Id()).XTenant(meta.tenant).Patch(*patchs).Execute()

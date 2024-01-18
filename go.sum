@@ -67,6 +67,8 @@ github.com/graalsystems/sdk v1.10.4 h1:PbPD/ilttvc1SuqN7jevfvKdUml6uHmJBzI3AbofH
 github.com/graalsystems/sdk v1.10.4/go.mod h1:gGWvYih3Ykcl8S+diAmk69bNk7so5wg4MCvwzmLDT1w=
 github.com/graalsystems/sdk v1.10.5 h1:vU0XMxRbmt0pP0PDsASPgMXVTMNriFbQNJZfDgftV48=
 github.com/graalsystems/sdk v1.10.5/go.mod h1:gGWvYih3Ykcl8S+diAmk69bNk7so5wg4MCvwzmLDT1w=
+github.com/graalsystems/sdk v1.10.6 h1:OoETABoFRMX944lsepS041Earx29J4lfLG6YLFQMBZo=
+github.com/graalsystems/sdk v1.10.6/go.mod h1:gGWvYih3Ykcl8S+diAmk69bNk7so5wg4MCvwzmLDT1w=
 github.com/grpc-ecosystem/grpc-gateway v1.16.0/go.mod h1:BDjrQk3hbvj6Nolgz8mAMFbcEtjT1g+wF4CSlocrBnw=
 github.com/hashicorp/errwrap v1.0.0 h1:hLrqtEDnRye3+sgx6z4qVLNuviH3MR5aQ0ykNJa/UYA=
 github.com/hashicorp/errwrap v1.0.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
