@@ -22,19 +22,20 @@ resource "graalsystems_project" "my_project" {
 }
 
 resource "graalsystems_identity" "my_identity" {
-  name        = "my_identity"
+  name = "my_identity"
 }
 
 resource "graalsystems_job" "my_job" {
-  name         = "my job"
-  description  = "my description"
-  project_id   = graalsystems_project.my_project.id
-  identity_id  = graalsystems_identity.my_identity.id
+  name        = "my job"
+  description = "my description"
+  project_id  = graalsystems_project.my_project.id
+  identity_id = graalsystems_identity.my_identity.id
 
   options {
-    type         = "bash"
-    docker_image = "docker.io/library/ubuntu:latest"
-    lines        = ["echo 'Hello World!'"]
+    type          = "bash"
+    docker_image  = "docker.io/library/ubuntu:latest"
+    lines         = ["echo 'Hello World!'"]
+    instance_type = "Standard_Development_D0_v1"
   }
   schedule {
     type = "once"
@@ -51,23 +52,24 @@ resource "graalsystems_project" "my_project" {
 }
 
 resource "graalsystems_identity" "my_identity" {
-  name        = "my_identity"
+  name = "my_identity"
 }
 
 resource "graalsystems_job" "my_job" {
-  name         = "my job"
-  description  = "my description"
-  project_id   = graalsystems_project.my_project.id
-  identity_id  = graalsystems_identity.my_identity.id
+  name        = "my job"
+  description = "my description"
+  project_id  = graalsystems_project.my_project.id
+  identity_id = graalsystems_identity.my_identity.id
 
   options {
-    type         = "python"
-    docker_image = "docker.io/graalsystems/python:3.9.4-release-1"
-    module       = "package.module"
+    type          = "python"
+    docker_image  = "docker.io/graalsystems/python:3.9.4-release-1"
+    module        = "package.module"
+    instance_type = "Standard_Development_D0_v1"
   }
   library {
     type = "file"
-    key = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+    key  = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
   }
   schedule {
     type              = "cron"
@@ -78,7 +80,7 @@ resource "graalsystems_job" "my_job" {
 
   timeout_seconds = 3600
 
-  labels {
+  labels = {
     project = "my project"
   }
 }
@@ -103,6 +105,7 @@ The following arguments are supported:
 The options block configures the job type. Depending on the type, different options are available.
 
 - `docker_image` - (Required) The docker image to use for the job.
+- `instance_type` - (Required) The compute type to use for the job run.
 - `lines` - (Optional) The bash lines to execute. Only required for `bash` type.
 - `module` - (Optional) The python module to execute. Only required for `python` type. Equivalent to `python -m <module>`.
 - `type` - (Required) The type of the job.
@@ -116,20 +119,6 @@ The schedule block configures the schedule of the job. Only one of `cron` or `on
 - `infrastructure_id` - (Optional) The ID of the infrastructure to use for the job. Only required for `cron` type.
 - `timezone` - (Optional) The timezone to use for the job. Only required for `cron` type.
 - `type` - (Required) The type of the schedule.
-
-### labels
-
-The labels block configures the tags of the job. You can specify multiple labels unique by their key.
-
-**Example:**
-
-```hcl
-labels {
-  project    = "My project"
-  department = "My department"
-  pipeline   = "Pipeline name"
-}
-```
 
 ### library
 
