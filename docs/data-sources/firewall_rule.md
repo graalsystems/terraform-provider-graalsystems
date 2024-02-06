@@ -1,5 +1,5 @@
 ---
-layout: "graalsystels"
+layout: "graalsystems"
 page_title: "GraalSystems: graalsystems_firewall_rule"
 description: |-
 Gets information about an existing firewall_rule.
