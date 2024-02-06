@@ -93,6 +93,7 @@ func Provider(config *ProviderConfig) plugin.ProviderFunc {
 				"graalsystems_user":      dataSourceGraalSystemsUser(),
 				"graalsystems_group":     dataSourceGraalSystemsGroup(),
 				"graalsystems_workspace": dataSourceGraalSystemsWorkspace(),
+				"graalsystems_workflow":  dataSourceGraalSystemsWorkflow(),
 			},
 		}
 
