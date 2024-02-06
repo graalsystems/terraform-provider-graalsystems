@@ -2,7 +2,6 @@ package graalsystems
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	sdk "github.com/graalsystems/sdk/go"
 	"strings"
@@ -55,19 +54,10 @@ func dataSourceGraalSystemsWorkspaceRead(ctx context.Context, d *schema.Resource
 	}
 	// Retrieving the workspace by its name need to retrieve all the workspaces and filter them
 	if name != "" {
-		if res, _, err := apiClient.WorkspaceAPI.FindWorkspaces(context.Background()).XTenant(meta.tenant).Execute(); err != nil {
+		if page, _, err := apiClient.WorkspaceAPI.FindWorkspaces(context.Background()).XTenant(meta.tenant).Execute(); err != nil {
 			return diag.FromErr(err)
 		} else {
-			var page sdk.WorkspacePage
 			var matches []sdk.Workspace
-
-			if pageBytes, errMarsh := json.Marshal(res); err != nil {
-				return diag.FromErr(errMarsh)
-			} else {
-				if errUnMarsh := json.Unmarshal(pageBytes, &page); errUnMarsh != nil {
-					return diag.FromErr(errUnMarsh)
-				}
-			}
 
 			for _, space := range page.Content {
 				if strings.TrimSpace(*space.Name) == strings.TrimSpace(name) {
