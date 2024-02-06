@@ -1,5 +1,5 @@
 ---
-layout: "graalsystels"
+layout: "graalsystems"
 page_title: "GraalSystems: graalsystems_workspace"
 description: |-
 Gets information about an existing workspace.

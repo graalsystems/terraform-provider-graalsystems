@@ -1,5 +1,5 @@
 ---
-layout: "graalsystels"
+layout: "graalsystems"
 page_title: "GraalSystems: graalsystems_job"
 description: |-
 Gets information about an existing job.

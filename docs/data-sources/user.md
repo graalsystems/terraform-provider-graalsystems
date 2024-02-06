@@ -1,5 +1,5 @@
 ---
-layout: "graalsystels"
+layout: "graalsystems"
 page_title: "GraalSystems: graalsystems_user"
 description: |-
 Gets information about an existing user.
