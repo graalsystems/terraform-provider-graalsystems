@@ -149,17 +149,6 @@ func resourceGraalSystemsWorkspaceRead(_ context.Context, d *schema.ResourceData
 	return nil
 }
 
-// patchFromResourceData creates a patch from a resource data
-func patchFromResourceData(d *schema.ResourceData, patchElement string) *sdk.Patch {
-	path := "/" + patchElement
-	value := d.Get(patchElement).(string)
-	op := "replace"
-	if err := validatePatchOperation(&op); err == nil {
-		return &sdk.Patch{Op: &op, Path: &path, Value: &value}
-	}
-	return nil
-}
-
 // resourceGraalSystemsWorkspaceUpdate updates a workspace
 func resourceGraalSystemsWorkspaceUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := m.(*Meta)
@@ -171,14 +160,14 @@ func resourceGraalSystemsWorkspaceUpdate(ctx context.Context, d *schema.Resource
 	}
 
 	if d.HasChange("name") {
-		_, _, err := apiClient.WorkspaceAPI.UpdateWorkspace(context.Background(), d.Id()).XTenant(meta.tenant).Patch([]sdk.Patch{*patchFromResourceData(d, "name")}).Execute()
+		_, _, err := apiClient.WorkspaceAPI.UpdateWorkspace(context.Background(), d.Id()).XTenant(meta.tenant).Patch(patchFromResourceData(d, "name")).Execute()
 		if err != nil {
 			return diag.FromErr(err)
 		}
 	}
 
 	if d.HasChange("description") {
-		_, _, err := apiClient.WorkspaceAPI.UpdateWorkspace(context.Background(), d.Id()).XTenant(meta.tenant).Patch([]sdk.Patch{*patchFromResourceData(d, "description")}).Execute()
+		_, _, err := apiClient.WorkspaceAPI.UpdateWorkspace(context.Background(), d.Id()).XTenant(meta.tenant).Patch(patchFromResourceData(d, "description")).Execute()
 		if err != nil {
 			return diag.FromErr(err)
 		}

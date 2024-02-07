@@ -84,6 +84,7 @@ func Provider(config *ProviderConfig) plugin.ProviderFunc {
 				"graalsystems_user":      resourceGraalSystemsUser(),
 				"graalsystems_group":     resourceGraalSystemsGroup(),
 				"graalsystems_workspace": resourceGraalSystemsWorkspace(),
+				"graalsystems_workflow":  resourceGraalSystemsWorkflow(),
 			},
 
 			DataSourcesMap: map[string]*schema.Resource{
@@ -93,6 +94,7 @@ func Provider(config *ProviderConfig) plugin.ProviderFunc {
 				"graalsystems_user":      dataSourceGraalSystemsUser(),
 				"graalsystems_group":     dataSourceGraalSystemsGroup(),
 				"graalsystems_workspace": dataSourceGraalSystemsWorkspace(),
+				"graalsystems_workflow":  dataSourceGraalSystemsWorkflow(),
 			},
 		}
 

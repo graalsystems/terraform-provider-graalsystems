@@ -2,7 +2,7 @@
 layout: "graalsystems"
 page_title: "GraalSystems: graalsystems_workspace"
 description: |-
-Gets information about an existing workspace.
+  Gets information about an existing workspace.
 ---
 
 # graalsystems_workspace
@@ -13,14 +13,14 @@ Gets information about an existing workspace.
 
 ```hcl
 # Get info by ID
-data graalsystems_workspace "by_id" {
+data "graalsystems_workspace" "by_id" {
   workspace_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 }
 ```
-    
+
 ```hcl
 # Get info by name
-data graalsystems_workspace "by_name" {
+data "graalsystems_workspace" "by_name" {
   name = "my workspace"
 }
 ```
@@ -28,10 +28,10 @@ data graalsystems_workspace "by_name" {
 ## Argument Reference
 
 - `name` - (Optional) The name of the workspace.
-  Only one of the `name` and `workpace_id` should be specified.
+  Only one of the `name` and `workspace_id` should be specified.
 
-- `workpace_id` - (Optional) The ID of the workspace.
-  Only one of the `name` and `workpace_id` should be specified.
+- `workspace_id` - (Optional) The ID of the workspace.
+  Only one of the `name` and `workspace_id` should be specified.
 
 ## Attribute Reference
 

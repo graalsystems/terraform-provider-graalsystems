@@ -3,6 +3,7 @@ package graalsystems
 import (
 	"fmt"
 	sdk "github.com/graalsystems/sdk/go"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"net/http"
 	"slices"
 	"strconv"
@@ -47,6 +48,9 @@ func is404Error(err error) bool {
 func toStringList(input []interface{}) []string {
 	var output []string
 	for _, v := range input {
+		if v == nil { // Maybe not a good practice, but useful for now
+			v = ""
+		}
 		output = append(output, v.(string))
 	}
 	return output
@@ -68,6 +72,122 @@ func validatePatchOperation(operation *string) error {
 	} else {
 		return fmt.Errorf("invalid patch operation: %s", *operation)
 	}
+}
+
+// patchString creates a patch from a string input
+func patchString(d *schema.ResourceData, patchElement string) (*sdk.Patch, error) {
+	path := "/" + patchElement
+
+	old, val := d.GetChange(patchElement)
+
+	value := val.(string)
+	var op string
+	if old == nil {
+		op = "add"
+	} else if val == nil {
+		op = "remove"
+	} else {
+		op = "replace"
+	}
+
+	if err := validatePatchOperation(&op); err != nil {
+		return nil, err
+	} else {
+		return &sdk.Patch{Op: &op, Path: &path, Value: &value}, nil
+	}
+}
+
+// patchMap creates a patch from a map input
+func patchMap(d *schema.ResourceData, patchElement string) ([]sdk.Patch, error) {
+	path := "/" + patchElement + "/"
+	old, val := d.GetChange(patchElement)
+	oldValues := toStringMap(old.(map[string]interface{}))
+	values := val.(map[string]interface{})
+	var patches []sdk.Patch
+
+	for k, v := range toStringMap(values) {
+		var op string
+		if _, ok := oldValues[k]; !ok {
+			op = "add"
+		} else {
+			op = "replace"
+		}
+		path += k
+		value := v
+		patches = append(patches, sdk.Patch{Op: &op, Path: &path, Value: &value})
+	}
+
+	path = "/" + patchElement + "/"
+	for k, _ := range oldValues {
+		if _, ok := values[k]; !ok {
+			var op string
+			op = "remove"
+			path += k
+			patches = append(patches, sdk.Patch{Op: &op, Path: &path})
+		}
+	}
+	return patches, nil
+}
+
+func patchList(d *schema.ResourceData, patchElement string) ([]sdk.Patch, error) {
+	/*path := "/" + patchElement + "/"
+	old, val := d.GetChange(patchElement)
+	oldList := old.([]interface{})
+	valList := val.([]interface{})
+	var patches []sdk.Patch
+	for i, v := range valList {
+		switch v.(type) {
+		case string:
+			if v.(string) != oldList[i].(string) {
+				strPatches, err := patchString(d, patchElement, i)
+				if err != nil {
+					return nil, err
+				}
+				patches = append(patches, *strPatches)
+			}
+		case map[string]interface{}:
+			mapPatches, err := patchMap(d, patchElement, i)
+			if err != nil {
+				return nil, err
+			}
+			for _, patch := range mapPatches {
+				patches = append(patches, patch)
+			}
+		}
+	}
+
+	return patches, nil*/
+	return nil, fmt.Errorf("not implemented")
+}
+
+// patchFromResourceData creates a patch from a resource data
+func patchFromResourceData(d *schema.ResourceData, patchElement string) []sdk.Patch {
+	switch d.Get(patchElement).(type) {
+	case string:
+		if patch, err := patchString(d, patchElement); err != nil {
+			fmt.Println(err)
+			return nil
+		} else {
+			return []sdk.Patch{*patch}
+		}
+	case map[string]interface{}:
+		if patches, err := patchMap(d, patchElement); err != nil {
+			fmt.Println(err)
+			return nil
+		} else {
+			return patches
+		}
+	case []interface{}:
+		if patches, err := patchList(d, patchElement); err != nil {
+			fmt.Println(err)
+			return nil
+		} else {
+			return patches
+		}
+	default:
+		fmt.Println("Could not find the proper type for the patch")
+	}
+	return nil
 }
 
 //func is412Error(err error) bool {
