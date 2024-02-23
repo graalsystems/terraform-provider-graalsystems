@@ -28,6 +28,31 @@ func resourceGraalSystemsProject() *schema.Resource {
 				Optional:    true,
 				Description: "The description of the project",
 			},
+			"banner": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The banner of the project",
+			},
+			"labels": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "The labels of the project",
+			},
+			"locked": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Whether the project is locked or not",
+			},
+			"favorite": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Whether the project is a favorite project or not",
+			},
+			"badge": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The badge of the project",
+			},
 		},
 	}
 }
@@ -38,9 +63,22 @@ func resourceGraalSystemsProjectCreate(ctx context.Context, d *schema.ResourceDa
 
 	name := d.Get("name").(string)
 	description := d.Get("description").(string)
+	banner := d.Get("banner").(string)
+	locked := d.Get("locked").(bool)
+	favorite := d.Get("favorite").(bool)
+	badge := d.Get("badge").(string)
+
+	lbl := d.Get("labels").(map[string]interface{})
+	labels := toStringMap(lbl)
+
 	project := &sdk.Project{
 		Name:        &name,
 		Description: &description,
+		Banner:      &banner,
+		Labels:      &labels,
+		Locked:      &locked,
+		Favorite:    &favorite,
+		Badge:       &badge,
 	}
 	result, _, err := apiClient.ProjectAPI.CreateProject(context.Background()).XTenant(meta.tenant).Project(*project).Execute()
 	if err != nil {
@@ -56,7 +94,7 @@ func resourceGraalSystemsProjectRead(ctx context.Context, d *schema.ResourceData
 	meta := m.(*Meta)
 	apiClient := meta.apiClient
 
-	res, _, err := apiClient.ProjectAPI.FindProjectById(context.Background(), d.Id()).XTenant(meta.tenant).Execute()
+	project, _, err := apiClient.ProjectAPI.FindProjectById(context.Background(), d.Id()).XTenant(meta.tenant).Execute()
 	if err != nil {
 		if is404Error(err) {
 			d.SetId("")
@@ -65,8 +103,15 @@ func resourceGraalSystemsProjectRead(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	_ = d.Set("name", res.Name)
-	_ = d.Set("description", res.Description)
+	_ = d.Set("name", project.Name)
+	if project.Description != nil {
+		_ = d.Set("description", project.Description)
+	}
+	_ = d.Set("banner", project.Banner)
+	_ = d.Set("labels", project.Labels)
+	_ = d.Set("locked", project.Locked)
+	_ = d.Set("favorite", project.Favorite)
+	_ = d.Set("badge", project.Badge)
 
 	return nil
 }
@@ -76,21 +121,36 @@ func resourceGraalSystemsProjectUpdate(ctx context.Context, d *schema.ResourceDa
 	apiClient := meta.apiClient
 
 	if d.HasChange("name") {
-		path := "/name"
-
-		value := d.Get("name").(string)
-
-		patch := &sdk.Patch{
-			Op:    nil,
-			Path:  &path,
-			Value: &value,
-		}
-		patchs := &[]sdk.Patch{*patch}
-		_, _, err := apiClient.ProjectAPI.UpdateProject(context.Background(), d.Id()).XTenant(meta.tenant).Patch(*patchs).Execute()
+		_, _, err := apiClient.ProjectAPI.UpdateProject(context.Background(), d.Id()).XTenant(meta.tenant).Patch(patchFromResourceData(d, "name")).Execute()
 		if err != nil {
 			return diag.FromErr(err)
 		}
 	}
+	if d.HasChange("description") {
+		_, _, err := apiClient.ProjectAPI.UpdateProject(context.Background(), d.Id()).XTenant(meta.tenant).Patch(patchFromResourceData(d, "description")).Execute()
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	if d.HasChange("banner") {
+		_, _, err := apiClient.ProjectAPI.UpdateProject(context.Background(), d.Id()).XTenant(meta.tenant).Patch(patchFromResourceData(d, "banner")).Execute()
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	if d.HasChange("badge") {
+		_, _, err := apiClient.ProjectAPI.UpdateProject(context.Background(), d.Id()).XTenant(meta.tenant).Patch(patchFromResourceData(d, "badge")).Execute()
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	if d.HasChange("labels") {
+		_, _, err := apiClient.ProjectAPI.UpdateProject(context.Background(), d.Id()).XTenant(meta.tenant).Patch(patchFromResourceData(d, "labels")).Execute()
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	// TODO add favorite & locked
 
 	return resourceGraalSystemsProjectRead(ctx, d, meta)
 }
