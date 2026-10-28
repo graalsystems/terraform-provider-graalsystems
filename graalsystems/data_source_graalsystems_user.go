@@ -18,6 +18,8 @@ func dataSourceGraalSystemsUser() *schema.Resource {
 		Description: "The ID of the user",
 	}
 
+	dsSchema["name"].Optional = true
+
 	return &schema.Resource{
 		ReadContext: dataSourceGraalSystemsUserRead,
 		Schema:      dsSchema,
@@ -29,8 +31,7 @@ func dataSourceGraalSystemsUserRead(ctx context.Context, d *schema.ResourceData,
 	apiClient := meta.apiClient
 
 	var user sdk.User
-	userId, ok := d.Get("user_id").(string)
-	if ok {
+	if userId := d.Get("user_id").(string); userId != "" {
 		p, _, err := apiClient.UserAPI.FindUserById(context.Background(), userId).XTenant(meta.tenant).Execute()
 		if err != nil {
 			return diag.FromErr(err)
@@ -41,6 +42,17 @@ func dataSourceGraalSystemsUserRead(ctx context.Context, d *schema.ResourceData,
 		if err != nil {
 			return diag.FromErr(err)
 		}
+		name := d.Get("name").(string)
+		if name == "" {
+			return diag.FromErr(fmt.Errorf("either user_id or name must be set"))
+		}
+		var matches []sdk.User
+		for _, item := range users {
+			if deref(item.Username) == name {
+				matches = append(matches, item)
+			}
+		}
+		users = matches
 		if len(users) == 0 {
 			return diag.FromErr(fmt.Errorf("no user found with the name %s", d.Get("name")))
 		}

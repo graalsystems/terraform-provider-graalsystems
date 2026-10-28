@@ -1,6 +1,6 @@
 ---
 layout: "graalsystems"
-page_title: "GraalSystems: graalsystems_group"
+page_title: "graal: graalsystems_group"
 description: |-
 Gets information about an existing group.
 ---

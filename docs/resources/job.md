@@ -1,13 +1,13 @@
 ---
-page_title: "GraalSystems: graalsystems_job"
+page_title: "graal: graalsystems_job"
 description: |-
-Manages GraalSystems Jobs.
+Manages graal Jobs.
 ---
 
 # graalsystems_job
 
-Creates and manages GraalSystems Jobs.
-For more information see [the documentation](https://docs.dev.graal.systems/).
+Creates and manages graal Jobs.
+For more information see [the documentation](https://graal.systems/en/docs).
 
 ~> **NOTE:** The only supported job types in this version are `bash` and `python`.
 
@@ -33,12 +33,8 @@ resource "graalsystems_job" "my_job" {
 
   options {
     type          = "bash"
-    docker_image  = "docker.io/library/ubuntu:latest"
     lines         = ["echo 'Hello World!'"]
     instance_type = "Standard_Development_D0_v1"
-  }
-  schedule {
-    type = "once"
   }
 }
 ```
@@ -63,7 +59,6 @@ resource "graalsystems_job" "my_job" {
 
   options {
     type          = "python"
-    docker_image  = "docker.io/graalsystems/python:3.9.4-release-1"
     module        = "package.module"
     instance_type = "Standard_Development_D0_v1"
   }
@@ -79,6 +74,7 @@ resource "graalsystems_job" "my_job" {
   }
 
   timeout_seconds = 3600
+  max_retries     = 2
 
   labels = {
     project = "my project"
@@ -91,21 +87,25 @@ resource "graalsystems_job" "my_job" {
 The following arguments are supported:
 
 - `description` (Optional) The description of the job.
+- `max_retries` (Optional) Number of automatic restarts after a failed run (0 or more).
+- `parameters` (Optional) List of parameters passed to the job.
+- `secrets` (Optional) List of project secret ids delivered to the runs.
 - `identity_id` (Required) The ID of the identity to use to run the job.
 - `labels` (Optional) The tag labels of the job.
 - `library` (Optional) The library configuration to specify the library to use in the job.
 - `name` - (Required) The name of the job.
 - `options` - (Required) The options configuration indicates the type of job.
 - `project_id` - (Required) The ID of the project to which the job belongs.
-- `schedule` - (Optional) The schedule configuration to specify the schedule of the job.
-- `timeout_seconds` (Optional) The timeout in seconds of the job.
+- `schedule` - (Optional) The schedule configuration of the job. Without it, the job only runs when started from the console, the API, `graalctl` or an agent.
+- `timeout_seconds` (Optional) Maximum duration of a run, in seconds.
 
 ### options
 
 The options block configures the job type. Depending on the type, different options are available.
 
-- `docker_image` - (Required) The docker image to use for the job.
-- `instance_type` - (Required) The compute type to use for the job run.
+- `docker_image` - (Optional) Container image to use. Defaults to the runtime image configured on the installation for the job type (`toolbox` for bash, `python` for python).
+- `env` - (Optional) Environment variables of the runs.
+- `instance_type` - (Required) The instance type (CPU, memory, GPU template) of the runs. List them with `graalctl instance-types list`.
 - `lines` - (Optional) The bash lines to execute. Only required for `bash` type.
 - `module` - (Optional) The python module to execute. Only required for `python` type. Equivalent to `python -m <module>`.
 - `type` - (Required) The type of the job.

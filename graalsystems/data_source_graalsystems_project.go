@@ -18,6 +18,8 @@ func dataSourceGraalSystemsProject() *schema.Resource {
 		Description: "The ID of the project",
 	}
 
+	dsSchema["name"].Optional = true
+
 	return &schema.Resource{
 		ReadContext: dataSourceGraalSystemsProjectRead,
 		Schema:      dsSchema,
@@ -29,8 +31,7 @@ func dataSourceGraalSystemsProjectRead(ctx context.Context, d *schema.ResourceDa
 	apiClient := meta.apiClient
 
 	var project sdk.Project
-	projectId, ok := d.Get("project_id").(string)
-	if ok {
+	if projectId := d.Get("project_id").(string); projectId != "" {
 		p, _, err := apiClient.ProjectAPI.FindProjectById(context.Background(), projectId).XTenant(meta.tenant).Execute()
 		if err != nil {
 			return diag.FromErr(err)
@@ -41,6 +42,17 @@ func dataSourceGraalSystemsProjectRead(ctx context.Context, d *schema.ResourceDa
 		if err != nil {
 			return diag.FromErr(err)
 		}
+		name := d.Get("name").(string)
+		if name == "" {
+			return diag.FromErr(fmt.Errorf("either project_id or name must be set"))
+		}
+		var matches []sdk.Project
+		for _, item := range projects {
+			if deref(item.Name) == name {
+				matches = append(matches, item)
+			}
+		}
+		projects = matches
 		if len(projects) == 0 {
 			return diag.FromErr(fmt.Errorf("no project found with the name %s", d.Get("name")))
 		}

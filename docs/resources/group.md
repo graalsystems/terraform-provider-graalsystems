@@ -1,13 +1,13 @@
 ---
-page_title: "GraalSystems: graalsystems_group"
+page_title: "graal: graalsystems_group"
 description: |-
-Manages GraalSystems Groups.
+Manages graal Groups.
 ---
 
 # graalsystems_group
 
-Creates and manages GraalSystems Groups.
-For more information see [the documentation](https://docs.dev.graal.systems/).
+Creates and manages graal Groups.
+For more information see [the documentation](https://graal.systems/en/docs).
 
 ## Examples
 
@@ -28,3 +28,5 @@ The following arguments are supported:
 - `name` - (Required) The name of the group.
 
 - `description` (Optional) The description of the group.
+
+The API cannot edit groups: changing `name` or `description` deletes the group and creates a new one.

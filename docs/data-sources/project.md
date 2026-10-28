@@ -1,6 +1,6 @@
 ---
 layout: "graalsystems"
-page_title: "GraalSystems: graalsystems_project"
+page_title: "graal: graalsystems_project"
 description: |-
 Gets information about an existing project.
 ---

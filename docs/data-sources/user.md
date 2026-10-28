@@ -1,6 +1,6 @@
 ---
 layout: "graalsystems"
-page_title: "GraalSystems: graalsystems_user"
+page_title: "graal: graalsystems_user"
 description: |-
 Gets information about an existing user.
 ---

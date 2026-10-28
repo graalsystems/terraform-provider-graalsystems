@@ -1,6 +1,6 @@
 ---
 layout: "graalsystems"
-page_title: "GraalSystems: graalsystems_workspace"
+page_title: "graal: graalsystems_workspace"
 description: |-
   Gets information about an existing workspace.
 ---

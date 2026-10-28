@@ -3,10 +3,11 @@ package graalsystems
 import (
 	"context"
 	"fmt"
+	"slices"
+
 	sdk "github.com/graalsystems/sdk/go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"slices"
 )
 
 func resourceGraalSystemsJob() *schema.Resource {
@@ -60,8 +61,8 @@ func resourceGraalSystemsJob() *schema.Resource {
 				Description: "Maximum retries in case of failure",
 				ValidateFunc: func(val any, key string) (warns []string, errs []error) {
 					v := val.(int)
-					if v <= 0 {
-						errs = append(errs, fmt.Errorf("%q must be greater or equal 0, got: %d", key, v))
+					if v < 0 {
+						errs = append(errs, fmt.Errorf("%q must be greater than or equal to 0, got: %d", key, v))
 					}
 					return
 				},
@@ -81,8 +82,8 @@ func resourceGraalSystemsJob() *schema.Resource {
 						},
 						"docker_image": {
 							Type:        schema.TypeString,
-							Required:    true,
-							Description: "Docker image to use for the job",
+							Optional:    true,
+							Description: "Container image to use for the job. Defaults to the runtime image configured on the installation for the job type",
 						},
 						"instance_type": {
 							Type:        schema.TypeString,
@@ -261,15 +262,8 @@ func resourceGraalSystemsJobCreate(ctx context.Context, d *schema.ResourceData, 
 	name := d.Get("name").(string)
 	description := d.Get("description").(string)
 	identityId := d.Get("identity_id").(string)
-	ts := d.Get("timeout_seconds").(int)
-	mr := d.Get("max_retries").(int)
 	parameters := d.Get("parameters").([]interface{})
-	lbl := d.Get("labels").(map[string]interface{})
-
-	// Convert the definition to the sdk.Job expected types
-	timeoutSeconds := int32(ts)
-	maxRetries := int32(mr)
-	labels := toStringMap(lbl)
+	labels := toStringMap(d.Get("labels").(map[string]interface{}))
 
 	opts := d.Get("options").([]interface{})
 	if diagnostics := validateOptions(opts[0]); diagnostics != nil {
@@ -277,38 +271,45 @@ func resourceGraalSystemsJobCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 	currentOptions := defineOptions(opts[0])
 
-	sch := d.Get("schedule").([]interface{})
-	if diagnostics := validateSchedule(sch[0]); diagnostics != nil {
-		return diagnostics
-	}
-	schedule := defineSchedule(sch[0])
-
 	libs := d.Get("library").([]interface{})
 	if diagnostics := validateLibraries(libs); diagnostics != nil {
 		return diagnostics
 	}
-	libraries := defineLibraries(libs)
 
 	job := &sdk.Job{
-		Name:           &name,
-		Description:    &description,
-		ProjectId:      &projectId,
-		IdentityId:     &identityId,
-		Options:        &currentOptions,
-		TimeoutSeconds: &timeoutSeconds,
-		MaxRetries:     &maxRetries,
-		Parameters:     toStringList(parameters),
-		Labels:         &labels,
-		Schedule:       &schedule,
-		Libraries:      libraries,
+		Name:        &name,
+		Description: &description,
+		ProjectId:   &projectId,
+		IdentityId:  &identityId,
+		Options:     &currentOptions,
+		Parameters:  toStringList(parameters),
+		Secrets:     toStringList(d.Get("secrets").([]interface{})),
+		Labels:      &labels,
+		Libraries:   defineLibraries(libs),
 	}
-	result, response, err := apiClient.ProjectAPI.CreateJobForProject(context.Background(), projectId).XTenant(meta.tenant).Job(*job).Execute()
+	if v, ok := d.GetOk("timeout_seconds"); ok {
+		timeoutSeconds := int32(v.(int))
+		job.TimeoutSeconds = &timeoutSeconds
+	}
+	if v, ok := d.GetOk("max_retries"); ok {
+		maxRetries := int32(v.(int))
+		job.MaxRetries = &maxRetries
+	}
+	// Without a schedule block, the job only runs when started explicitly.
+	if sch := d.Get("schedule").([]interface{}); len(sch) > 0 && sch[0] != nil {
+		if diagnostics := validateSchedule(sch[0]); diagnostics != nil {
+			return diagnostics
+		}
+		schedule := defineSchedule(sch[0])
+		job.Schedule = &schedule
+	}
+
+	result, _, err := apiClient.ProjectAPI.CreateJobForProject(context.Background(), projectId).XTenant(meta.tenant).Job(*job).Execute()
 	if err != nil {
-		fmt.Printf("Error %+v", err)
 		return diag.FromErr(err)
 	}
-	if response.StatusCode == 200 {
-		return diag.FromErr(fmt.Errorf("Job created, but could not retrieve its info. Check that every parameter you entered is valid."))
+	if result == nil || result.Id == nil {
+		return diag.FromErr(fmt.Errorf("the job was created but the API did not return its id"))
 	}
 
 	d.SetId(*result.Id)
@@ -331,29 +332,64 @@ func resourceGraalSystemsJobRead(ctx context.Context, d *schema.ResourceData, m 
 
 	_ = d.Set("name", res.Name)
 	_ = d.Set("description", res.Description)
+	_ = d.Set("project_id", res.ProjectId)
+	_ = d.Set("identity_id", res.IdentityId)
+	if res.TimeoutSeconds != nil {
+		_ = d.Set("timeout_seconds", int(*res.TimeoutSeconds))
+	}
+	if res.MaxRetries != nil {
+		_ = d.Set("max_retries", int(*res.MaxRetries))
+	}
+	_ = d.Set("parameters", res.Parameters)
+	_ = d.Set("secrets", res.Secrets)
+	if res.Labels != nil {
+		_ = d.Set("labels", *res.Labels)
+	}
 
 	return nil
 }
 
 func resourceGraalSystemsJobUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := m.(*Meta)
-	apiClient := meta.apiClient
-	//TODO: update when other parameters are updated
-	if d.HasChange("name") {
-		path := "/name"
 
-		value := d.Get("name").(string)
-
-		patch := &sdk.Patch{
-			Op:    nil,
-			Path:  &path,
-			Value: &value,
+	ops := replaceChanged(d, "name", "description", "labels", "parameters", "secrets")
+	for _, attr := range []string{"timeout_seconds", "max_retries"} {
+		if !d.HasChange(attr) {
+			continue
 		}
-		patchs := &[]sdk.Patch{*patch}
-		_, _, err := apiClient.JobAPI.UpdateJob(context.Background(), d.Id()).XTenant(meta.tenant).Patch(*patchs).Execute()
-		if err != nil {
-			return diag.FromErr(err)
+		if v, ok := d.GetOk(attr); ok {
+			ops = append(ops, patchOperation{Op: "replace", Path: "/" + attr, Value: v})
+		} else {
+			ops = append(ops, patchOperation{Op: "remove", Path: "/" + attr})
 		}
+	}
+	if d.HasChange("options") {
+		opts := d.Get("options").([]interface{})
+		if diagnostics := validateOptions(opts[0]); diagnostics != nil {
+			return diagnostics
+		}
+		ops = append(ops, patchOperation{Op: "replace", Path: "/options", Value: defineOptions(opts[0])})
+	}
+	if d.HasChange("schedule") {
+		sch := d.Get("schedule").([]interface{})
+		if len(sch) == 0 || sch[0] == nil {
+			ops = append(ops, patchOperation{Op: "remove", Path: "/schedule"})
+		} else {
+			if diagnostics := validateSchedule(sch[0]); diagnostics != nil {
+				return diagnostics
+			}
+			ops = append(ops, patchOperation{Op: "replace", Path: "/schedule", Value: defineSchedule(sch[0])})
+		}
+	}
+	if d.HasChange("library") {
+		libs := d.Get("library").([]interface{})
+		if diagnostics := validateLibraries(libs); diagnostics != nil {
+			return diagnostics
+		}
+		ops = append(ops, patchOperation{Op: "replace", Path: "/libraries", Value: defineLibraries(libs)})
+	}
+	if err := applyPatch(ctx, meta, "/jobs/"+d.Id(), ops); err != nil {
+		return diag.FromErr(err)
 	}
 
 	return resourceGraalSystemsJobRead(ctx, d, meta)

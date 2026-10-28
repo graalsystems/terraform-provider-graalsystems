@@ -1,6 +1,6 @@
 ---
 layout: "graalsystems"
-page_title: "GraalSystems: graalsystems_workflow"
+page_title: "graal: graalsystems_workflow"
 description: |-
   Gets information about an existing Workflow.
 ---

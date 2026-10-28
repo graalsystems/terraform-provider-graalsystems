@@ -3,6 +3,7 @@ package graalsystems
 import (
 	"encoding/json"
 	"fmt"
+
 	sdk "github.com/graalsystems/sdk/go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 )
@@ -52,7 +53,7 @@ func validateOptions(input interface{}) diag.Diagnostics {
 		if err != nil {
 			fmt.Println("python options unmarshall error:", err)
 		}
-		if *opt.Module == "" {
+		if deref(opt.Module) == "" {
 			return diag.FromErr(fmt.Errorf("module parameter is required for options type %s", optionTypePython))
 		}
 	}
@@ -74,9 +75,6 @@ func defineOptions(input interface{}) sdk.IOptions {
 		err = json.Unmarshal(optBytes, &opt)
 		if err != nil {
 			fmt.Println("bash options definition unmarshall error:", err)
-		}
-		if opt.Lines == nil {
-
 		}
 		return opt
 	}

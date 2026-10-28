@@ -1,170 +1,136 @@
 ---
-page_title: "Provider: GraalSystems"
+page_title: "Provider: graal"
 description: |-
-The GraalSystems provider is used to manage [GraalSystems](https://graal.systems) resources. The provider needs to be configured with the proper credentials before it can be used.
+  The graalsystems provider manages resources of a graal Data Platform installation: projects, identities, jobs, workflows, workspaces, users and groups.
 ---
 
-# GraalSystems Provider
+# graal Provider
 
-The GraalSystems provider is used to manage GraalSystems resources.
-The provider needs to be configured with the proper credentials before it can be used.
+The `graalsystems` provider manages resources of a [graal Data Platform](https://graal.systems/en/docs)
+installation through its REST API (`/api/v1`): projects, identities, jobs, workflows,
+workspaces, users and groups.
 
-**This is the documentation for the version `>= 1.0.4` of the provider.**
+graal is self-hosted: point the provider at your own installation (API URL, OpenID Connect
+server and tenant).
 
-Use the navigation to the left to read about the available resources.
-
-## Terraform 0.13 and later
-
-For Terraform 0.13 and later, please also include this:
-
-```hcl
-terraform {
-  required_providers {
-    graalsystems = {
-      source = "graalsystems/graalsystems"
-    }
-  }
-  required_version = ">= 1.0.1"
-}
-```
+Use the navigation to the left to read about the available resources and data sources.
 
 ## Example
 
-Here is an example that will set up a project with a job, an identity and a library.
-
-You can test this config by creating a `test.tf` and run terraform commands from this directory:
-
-- Get your credentials
-- Initialize a Terraform working directory: `terraform init`
-- Generate and show the execution plan: `terraform plan`
-- Build the infrastructure: `terraform apply`
-
 ```hcl
 terraform {
   required_providers {
     graalsystems = {
-      source = "graalsystems/graalsystems"
-      version = "1.0.4"
+      source  = "graalsystems/graalsystems"
+      version = "~> 1.1"
     }
   }
 }
 
+# Credentials come from GRAAL_CLIENT_ID and GRAAL_CLIENT_SECRET.
 provider "graalsystems" {
-  api_url = "https://api.graal.systems/api/v1"
-  auth_url = "https://identity.graal.systems"
-  tenant = "XXX"
-  username = "XXX"
-  password = "XXX"
+  api_url  = "https://graal.example.com/api/v1"
+  auth_url = "https://sso.example.com"
+  tenant   = "acme"
 }
 
-resource "graalsystems_project" "my_project" {
-  name = "Example project"
-  description = "This is an example project"
+resource "graalsystems_project" "analytics" {
+  name        = "Analytics"
+  description = "Sales analytics"
 }
 
-resource "graalsystems_identity" "my_identity" {
-  name = "my identity"
+resource "graalsystems_identity" "runner" {
+  name = "analytics-runner"
 }
 
-resource "graalsystems_job" "my_job" {
-  project_id = graalsystems_project.my_project.id
-  identity_id = graalsystems_identity.my_identity.id
-  name = "my job"
-  description = "a useful description job"
-  labels = {
-    "pipeline": "data-ingestion"
+resource "graalsystems_job" "nightly_load" {
+  name        = "nightly-load"
+  project_id  = graalsystems_project.analytics.id
+  identity_id = graalsystems_identity.runner.id
+
+  options {
+    type          = "python"
+    module        = "loader.main"
+    instance_type = "Standard_Development_D1_v1"
   }
 
-  spark {
-    instance_type = "Standard_General_G1_v1"
-    main_class_name = "org.acme.MySparkJob"
+  library {
+    type = "file"
+    key  = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" # graalctl libraries upload loader.whl
   }
+
+  schedule {
+    type              = "cron"
+    cron_expression   = "0 6 * * *"
+    timezone          = "Europe/Paris"
+    infrastructure_id = "my-infrastructure"
+  }
+
+  timeout_seconds = 3600
+  max_retries     = 2
 }
 ```
 
+Run `terraform init`, `terraform plan` and `terraform apply` from the directory holding this
+configuration.
+
 ## Authentication
 
-The [GraalSystems](https://graal.systems) authentication is based on personal credentials or application credentials.
+The provider gets an OpenID Connect token from the installation's Keycloak, in one of two modes:
 
-The GraalSystems provider offers three ways of providing these credentials.
-The following methods are supported, in this priority order:
+- `application` (recommended for automation): the id and secret of a graal Application,
+  exchanged with the client credentials grant. The application acts with the rights of its
+  service account.
+- `credentials`: a username and password (resource owner password grant, local accounts only).
 
-1. [Environment variables](#environment-variables)
-1. [Static credentials](#static-credentials)
+The mode is inferred from the attributes that are set; `auth_mode` forces it.
+
+!> **Warning** Do not write secrets in Terraform files. Use environment variables or a
+secret manager.
 
 ### Environment variables
 
-!> **Warning** Not released yet
-
-You can provide your credentials via the `GS_USERNAME`, `GS_PASSWORD` environment variables.
-
-Example:
+```bash
+export GRAAL_API_URL="https://graal.example.com/api/v1"
+export GRAAL_KEYCLOAK_URL="https://sso.example.com"
+export GRAAL_TENANT="acme"
+export GRAAL_CLIENT_ID="terraform"
+export GRAAL_CLIENT_SECRET="..."
+terraform plan
+```
 
 ```hcl
 provider "graalsystems" {}
 ```
 
-Usage:
+The `GS_*` variables of earlier versions (`GS_API_URL`, `GS_AUTH_URL`, `GS_TENANT`,
+`GS_APPLICATION_ID`, `GS_APPLICATION_SECRET`, `GS_USERNAME`, `GS_PASSWORD`, `GS_AUTH_MODE`)
+are still read.
+
+## Argument Reference
+
+| Argument | Environment variable | Description |
+|---|---|---|
+| `api_url` | `GRAAL_API_URL` | URL of the REST API, including `/api/v1`. Required. |
+| `auth_url` | `GRAAL_KEYCLOAK_URL` | Base URL of the OpenID Connect server (Keycloak), without `/realms/...`. Required. |
+| `tenant` | `GRAAL_TENANT` | The tenant, sent as the `X-Tenant` header. Required. |
+| `realm` | `GRAAL_REALM` | Authentication realm. Discovered from the tenant when omitted. |
+| `auth_mode` | `GRAAL_AUTH_MODE` | `application` or `credentials`. Inferred when omitted. |
+| `application_id` | `GRAAL_CLIENT_ID` | Application id (`application` mode). |
+| `application_secret` | `GRAAL_CLIENT_SECRET` | Application secret (`application` mode). Sensitive. |
+| `username` | `GRAAL_USERNAME` | Username (`credentials` mode). |
+| `password` | `GRAAL_PASSWORD` | Password (`credentials` mode). Sensitive. |
+
+## Debugging
 
 ```bash
-$ export GS_USERNAME="my-username"
-$ export GS_PASSWORD="my-password"
-$ terraform plan
+GRAAL_DEBUG=1 TF_LOG=WARN TF_LOG_PROVIDER=DEBUG terraform apply
 ```
 
-### Static credentials
+- `GRAAL_DEBUG`: logs the HTTP requests of the graal SDK.
+- `TF_LOG`, `TF_LOG_PROVIDER`: [Terraform logging](https://developer.hashicorp.com/terraform/internals/debugging).
 
-!> **Warning** Hard-coding credentials into any Terraform configuration is not recommended, and risks secret leakage should this file ever be committed to a public version control system.
+## Reporting issues
 
-Static credentials can be provided by adding `username` and `password` (for auth mode ```credentials```) or `application_id` and `application_secret` (for auth mode ```application```) attributes in-line in the GraalSystems provider block:
-
-Example:
-
-```hcl
-provider "graalsystems" {
-  username = "XXX"
-  password = "XXX"
-  auth_mode = "credentials"
-}
-```
-
-Or
-
-```hcl
-provider "graalsystems" {
-  application_id = "XXX"
-  application_secret = "XXX"
-  auth_mode = "application"
-}
-```
-
-## Arguments Reference
-
-In addition to [generic provider arguments](https://www.terraform.io/docs/configuration/providers.html) (e.g. `alias` and `version`), the following arguments are supported in the GraalSystems provider block:
-
-| Provider Argument | [Environment Variables](#environment-variables) | Description                                                                                                                             | Mandatory |
-|-------------------|-------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|-----------|
-| `username`      | `GS_USERNAME`                                | [username](https://console.graal.systems)                                                                 | ✅        |
-| `password`      | `GS_PASSWORD`                                | [password](https://console.graal.systems)                                                                 | ✅        |
-| `application_id`      | `GS_APPLICATION_ID`                                | [Application Id](https://console.graal.systems)                                                                 | ✅        |
-| `application_secret`      | `GS_APPLICATION_SECRET`                                | [Application Secret](https://console.graal.systems)                                                                 | ✅        |
-| `tenant`      | `GS_TENANT`                        | The [tenant ID](https://console.graal.systems/profile) that will be used as default value for all resources.                   | ✅        |
-| `api_url`      | `GS_API_URL`                        |                    |         |
-| `auth_url`      | `GS_AUTH_URL`                        |     |         |
-| `auth_mode`      | `GS_AUTH_MODE`                        | ```credentials``` or ```application```    |         |
-
-## Debugging a deployment
-
-In case you want to [debug a deployment](https://www.terraform.io/internals/debugging), you can use the following command to increase the level of verbosity.
-
-`GS_DEBUG=true TF_LOG=WARN TF_LOG_PROVIDER=DEBUG terraform apply`
-
-- `GS_DEBUG`: set the debug level of the graalsystems SDK.
-- `TF_LOG`: set the level of the Terraform logging.
-- `TF_LOG_PROVIDER`: set the level of the GraalSystems Terraform provider logging.
-
-### Submitting a bug report or a feature request
-
-In case you find something wrong with the graalsystems provider, please submit a bug report on the [Terraform provider repository](https://github.com/graalsystems/terraform-provider-graalsystems/issues/new/choose).
-If it is a bug report, please include a **minimal** snippet of the Terraform configuration that triggered the error.
-This helps a lot to debug the issue.
+Open an issue on the [provider repository](https://github.com/graalsystems/terraform-provider-graalsystems/issues)
+with a **minimal** configuration that reproduces the problem.

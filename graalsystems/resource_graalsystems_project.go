@@ -73,23 +73,10 @@ func resourceGraalSystemsProjectRead(ctx context.Context, d *schema.ResourceData
 
 func resourceGraalSystemsProjectUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := m.(*Meta)
-	apiClient := meta.apiClient
 
-	if d.HasChange("name") {
-		path := "/name"
-
-		value := d.Get("name").(string)
-
-		patch := &sdk.Patch{
-			Op:    nil,
-			Path:  &path,
-			Value: &value,
-		}
-		patchs := &[]sdk.Patch{*patch}
-		_, _, err := apiClient.ProjectAPI.UpdateProject(context.Background(), d.Id()).XTenant(meta.tenant).Patch(*patchs).Execute()
-		if err != nil {
-			return diag.FromErr(err)
-		}
+	ops := replaceChanged(d, "name", "description")
+	if err := applyPatch(ctx, meta, "/projects/"+d.Id(), ops); err != nil {
+		return diag.FromErr(err)
 	}
 
 	return resourceGraalSystemsProjectRead(ctx, d, meta)

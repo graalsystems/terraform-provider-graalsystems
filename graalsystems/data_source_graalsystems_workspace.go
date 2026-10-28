@@ -3,8 +3,9 @@ package graalsystems
 import (
 	"context"
 	"fmt"
-	sdk "github.com/graalsystems/sdk/go"
 	"strings"
+
+	sdk "github.com/graalsystems/sdk/go"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"

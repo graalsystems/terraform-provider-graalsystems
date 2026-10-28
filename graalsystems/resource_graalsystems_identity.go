@@ -73,23 +73,10 @@ func resourceGraalSystemsIdentityRead(ctx context.Context, d *schema.ResourceDat
 
 func resourceGraalSystemsIdentityUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := m.(*Meta)
-	apiClient := meta.apiClient
 
-	if d.HasChange("name") {
-		path := "/name"
-
-		value := d.Get("name").(string)
-
-		patch := &sdk.Patch{
-			Op:    nil,
-			Path:  &path,
-			Value: &value,
-		}
-		patchs := &[]sdk.Patch{*patch}
-		_, _, err := apiClient.IdentityAPI.UpdateIdentity(context.Background(), d.Id()).XTenant(meta.tenant).Patch(*patchs).Execute()
-		if err != nil {
-			return diag.FromErr(err)
-		}
+	ops := replaceChanged(d, "name", "description")
+	if err := applyPatch(ctx, meta, "/identities/"+d.Id(), ops); err != nil {
+		return diag.FromErr(err)
 	}
 
 	return resourceGraalSystemsIdentityRead(ctx, d, meta)
