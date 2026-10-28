@@ -112,6 +112,16 @@ func resourceGraalSystemsJob() *schema.Resource {
 							Optional:    true,
 							Description: "Python module to execute. Only used if type is `python`",
 						},
+						"file": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "File to run, relative to the run's /workspace where libraries are copied. Used by `python` and `spark` jobs",
+						},
+						"main_class_name": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Main class of a JVM Spark application. Only used if type is `spark`",
+						},
 					},
 				},
 			},

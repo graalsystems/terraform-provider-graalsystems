@@ -9,7 +9,7 @@ Manages graal Jobs.
 Creates and manages graal Jobs.
 For more information see [the documentation](https://graal.systems/en/docs).
 
-~> **NOTE:** The only supported job types in this version are `bash` and `python`.
+~> **NOTE:** This version manages `bash`, `python` and `spark` jobs. Other job types (`lowcode`, `docker`, `dbt`, `dask`, `flink`, `ray`) can be created from the console, the API or `graalctl jobs create`.
 
 ## Example usage
 
@@ -59,7 +59,7 @@ resource "graalsystems_job" "my_job" {
 
   options {
     type          = "python"
-    module        = "package.module"
+    file          = "main.py"
     instance_type = "Standard_Development_D0_v1"
   }
   library {
@@ -107,8 +107,10 @@ The options block configures the job type. Depending on the type, different opti
 - `env` - (Optional) Environment variables of the runs.
 - `instance_type` - (Required) The instance type (CPU, memory, GPU template) of the runs. List them with `graalctl instance-types list`.
 - `lines` - (Optional) The bash lines to execute. Only required for `bash` type.
-- `module` - (Optional) The python module to execute. Only required for `python` type. Equivalent to `python -m <module>`.
-- `type` - (Required) The type of the job.
+- `file` - (Optional) The file to run, relative to the run's `/workspace` where libraries are copied. For `python` and `spark` jobs.
+- `main_class_name` - (Optional) The main class of a JVM Spark application. For `spark` jobs.
+- `module` - (Optional) The python module to execute, as with `python -m <module>`. For `python` jobs (`file` or `module` is required).
+- `type` - (Required) The type of the job: `bash`, `python` or `spark`.
 
 ### schedule
 

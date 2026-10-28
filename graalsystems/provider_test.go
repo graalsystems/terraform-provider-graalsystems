@@ -126,3 +126,26 @@ func TestMaxRetriesAcceptsZero(t *testing.T) {
 	_, errs = validate(-1, "max_retries")
 	assert.NotEmpty(t, errs)
 }
+
+func TestDefineOptions(t *testing.T) {
+	block := map[string]interface{}{
+		"type":          "python",
+		"file":          "first_job.py",
+		"instance_type": "Standard_Development_D1_v1",
+		"docker_image":  "",
+		"module":        "",
+		"lines":         []interface{}{},
+		"env":           map[string]interface{}{"STAGE": "prod"},
+	}
+	assert.Nil(t, validateOptions(block))
+	assert.Equal(t, map[string]interface{}{
+		"type":          "python",
+		"file":          "first_job.py",
+		"instance_type": "Standard_Development_D1_v1",
+		"env":           map[string]string{"STAGE": "prod"},
+	}, defineOptions(block))
+
+	assert.NotNil(t, validateOptions(map[string]interface{}{"type": "python"}))
+	assert.NotNil(t, validateOptions(map[string]interface{}{"type": "bash", "lines": []interface{}{}}))
+	assert.Nil(t, validateOptions(map[string]interface{}{"type": "spark", "main_class_name": "org.acme.Job"}))
+}

@@ -50,13 +50,13 @@ resource "graalsystems_job" "nightly_load" {
 
   options {
     type          = "python"
-    module        = "loader.main"
+    file          = "loader.py"
     instance_type = "Standard_Development_D1_v1"
   }
 
   library {
     type = "file"
-    key  = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" # graalctl libraries upload loader.whl
+    key  = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" # graalctl libraries upload loader.py
   }
 
   schedule {

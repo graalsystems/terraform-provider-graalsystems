@@ -24,7 +24,7 @@ variable "infrastructure_id" {
 }
 
 variable "code_library_key" {
-  description = "Key of the uploaded code (graalctl libraries upload loader.whl)."
+  description = "Key of the uploaded code (graalctl libraries upload extract.py)."
   type        = string
 }
 
@@ -44,7 +44,7 @@ resource "graalsystems_job" "extract" {
 
   options {
     type          = "python"
-    module        = "loader.extract"
+    file          = "extract.py"
     instance_type = "Standard_Development_D1_v1"
   }
 

@@ -29,7 +29,7 @@
   variables still work). `password` and `application_secret` are marked sensitive.
 - `auth_mode` is inferred from the credentials that are set; new `realm` argument; the realm
   falls back to the tenant when it cannot be discovered.
-- `graalsystems_job`: `docker_image` is optional (the installation's runtime image is used),
+- `graalsystems_job`: new `spark` type, `file` and `main_class_name` options; `docker_image` is optional (the installation's runtime image is used),
   `secrets` are sent, more attributes are read back to detect drift.
 - `graalsystems_workspace`: changing `type`, `infrastructure_id` or `instance_type` recreates it.
 - Dependencies updated (terraform-plugin-sdk v2.40, oauth2, Go 1.26), GoReleaser v2, CI with
