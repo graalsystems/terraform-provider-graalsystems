@@ -149,3 +149,13 @@ func TestDefineOptions(t *testing.T) {
 	assert.NotNil(t, validateOptions(map[string]interface{}{"type": "bash", "lines": []interface{}{}}))
 	assert.Nil(t, validateOptions(map[string]interface{}{"type": "spark", "main_class_name": "org.acme.Job"}))
 }
+
+func TestWorkspaceTypes(t *testing.T) {
+	validate := resourceGraalSystemsWorkspace().Schema["type"].ValidateFunc
+	for _, typ := range []string{"jupyter", "vscode", "rstudio", "grafana", "superset", "metabase", "zeppelin"} {
+		_, errs := validate(typ, "type")
+		assert.Empty(t, errs, typ)
+	}
+	_, errs := validate("notebook", "type")
+	assert.NotEmpty(t, errs)
+}

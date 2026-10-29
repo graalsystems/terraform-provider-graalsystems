@@ -32,7 +32,7 @@ The following arguments are supported:
 - `infrastructure_id` - (Required) The ID of the infrastructure the workspace will be deployed to.
 - `instance_type` - (Required) The compute instance type used to run the workspace.
 - `name` - (Required) The name of the workspace.
-- `type` (Required) The type of workspace: `jupyter`, `vscode` (code-server) or `rstudio`.
+- `type` (Required) The type of workspace: `jupyter`, `vscode` (code-server), `rstudio`, `grafana`, `superset`, `metabase` or `zeppelin`.
 
 ## Attributes Reference
 
