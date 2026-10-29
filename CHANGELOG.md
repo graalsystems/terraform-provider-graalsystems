@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.2.2 (2026-10-29)
+
+Fixes found by applying the example configuration against a real graal installation.
+
+- Every update failed with HTTP 406: the JSON Patch request asked for `application/json`, and the
+  API only answers with the resource's vendor media type
+  (`application/vnd.graal.systems.v1.<type>+json`). Creating resources was not affected.
+- Updates use the JSON Patch `add` operation, which sets a field whether the API returned it or
+  not; `replace` was refused (`INVALID_PATCH`) on fields the API leaves out when empty, such as
+  the description of a user.
+- `graalsystems_job`: `timeout_seconds` and `max_retries` are computed when omitted. The API sets
+  a default (3600 s), and every plan tried to set it back to null.
+
 ## 1.2.1 (2026-10-29)
 
 - `graalsystems_workspace`: `type` accepts every workspace type the platform serves again:

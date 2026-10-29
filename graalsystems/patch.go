@@ -19,13 +19,18 @@ type patchOperation struct {
 	Value interface{} `json:"value,omitempty"`
 }
 
-// replaceChanged returns a "replace" operation for each attribute that changed.
+// replaceChanged returns an operation that sets each attribute that changed.
 // Attribute names must match the API field names.
+//
+// The operation is "add", not "replace": the API omits empty fields from some
+// resources (a user without description, for example), and "replace" on a
+// missing member fails with INVALID_PATCH. "add" sets the member whether it
+// exists or not (RFC 6902, section 4.1).
 func replaceChanged(d *schema.ResourceData, attributes ...string) []patchOperation {
 	var ops []patchOperation
 	for _, a := range attributes {
 		if d.HasChange(a) {
-			ops = append(ops, patchOperation{Op: "replace", Path: "/" + a, Value: d.Get(a)})
+			ops = append(ops, patchOperation{Op: "add", Path: "/" + a, Value: d.Get(a)})
 		}
 	}
 	return ops
@@ -34,7 +39,11 @@ func replaceChanged(d *schema.ResourceData, attributes ...string) []patchOperati
 // applyPatch sends a JSON Patch document to a resource of the API (there is no
 // full PUT). The SDK's Patch model only carries string values, so the request
 // is made directly with the SDK's authenticated HTTP client.
-func applyPatch(ctx context.Context, meta *Meta, path string, ops []patchOperation) error {
+//
+// kind names the resource type of the vendor media type the API answers with
+// (application/vnd.graal.systems.v1.<kind>+json): any other Accept header is
+// refused with 406 Not Acceptable.
+func applyPatch(ctx context.Context, meta *Meta, kind, path string, ops []patchOperation) error {
 	if len(ops) == 0 {
 		return nil
 	}
@@ -52,7 +61,7 @@ func applyPatch(ctx context.Context, meta *Meta, path string, ops []patchOperati
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json-patch+json;charset=UTF-8")
-	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Accept", "application/vnd.graal.systems.v1."+kind+"+json")
 	req.Header.Set("X-Tenant", meta.tenant)
 	req.Header.Set("User-Agent", cfg.UserAgent)
 

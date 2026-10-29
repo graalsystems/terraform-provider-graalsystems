@@ -77,10 +77,10 @@ func resourceGraalSystemsUserUpdate(ctx context.Context, d *schema.ResourceData,
 	// The Terraform attribute "name" is the API field "username".
 	var ops []patchOperation
 	if d.HasChange("name") {
-		ops = append(ops, patchOperation{Op: "replace", Path: "/username", Value: d.Get("name")})
+		ops = append(ops, patchOperation{Op: "add", Path: "/username", Value: d.Get("name")})
 	}
 	ops = append(ops, replaceChanged(d, "description")...)
-	if err := applyPatch(ctx, meta, "/users/"+d.Id(), ops); err != nil {
+	if err := applyPatch(ctx, meta, "user", "/users/"+d.Id(), ops); err != nil {
 		return diag.FromErr(err)
 	}
 

@@ -87,7 +87,7 @@ resource "graalsystems_job" "my_job" {
 The following arguments are supported:
 
 - `description` (Optional) The description of the job.
-- `max_retries` (Optional) Number of automatic restarts after a failed run (0 or more).
+- `max_retries` (Optional) Number of automatic restarts after a failed run (0 or more). The platform's default when omitted.
 - `parameters` (Optional) List of parameters passed to the job.
 - `secrets` (Optional) List of project secret ids delivered to the runs.
 - `identity_id` (Required) The ID of the identity to use to run the job.
@@ -97,7 +97,7 @@ The following arguments are supported:
 - `options` - (Required) The options configuration indicates the type of job.
 - `project_id` - (Required) The ID of the project to which the job belongs.
 - `schedule` - (Optional) The schedule configuration of the job. Without it, the job only runs when started from the console, the API, `graalctl` or an agent.
-- `timeout_seconds` (Optional) Maximum duration of a run, in seconds.
+- `timeout_seconds` (Optional) Maximum duration of a run, in seconds. The platform's default (3600) when omitted.
 
 ### options
 

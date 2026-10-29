@@ -164,7 +164,7 @@ func resourceGraalSystemsWorkspaceUpdate(ctx context.Context, d *schema.Resource
 	meta := m.(*Meta)
 
 	ops := replaceChanged(d, "name", "description")
-	if err := applyPatch(ctx, meta, "/workspaces/"+d.Id(), ops); err != nil {
+	if err := applyPatch(ctx, meta, "workspace", "/workspaces/"+d.Id(), ops); err != nil {
 		return diag.FromErr(err)
 	}
 

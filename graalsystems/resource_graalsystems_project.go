@@ -75,7 +75,7 @@ func resourceGraalSystemsProjectUpdate(ctx context.Context, d *schema.ResourceDa
 	meta := m.(*Meta)
 
 	ops := replaceChanged(d, "name", "description")
-	if err := applyPatch(ctx, meta, "/projects/"+d.Id(), ops); err != nil {
+	if err := applyPatch(ctx, meta, "project", "/projects/"+d.Id(), ops); err != nil {
 		return diag.FromErr(err)
 	}
 
