@@ -23,10 +23,33 @@ func resourceGraalSystemsUser() *schema.Resource {
 				Required:    true,
 				Description: "The username of the user",
 			},
+			"email": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The email address of the user",
+			},
+			"first_name": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The first name of the user",
+			},
+			"last_name": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The last name of the user",
+			},
+			"password": {
+				Type:      schema.TypeString,
+				Optional:  true,
+				Sensitive: true,
+				Description: "Initial password of the user, set at creation only. Without it, the user " +
+					"signs in through an identity provider or after a password reset.",
+			},
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "The description of the user",
+				Deprecated:  "The platform does not store a description for users; this attribute is ignored.",
+				Description: "Ignored: the platform does not store a description for users.",
 			},
 		},
 	}
@@ -37,10 +60,22 @@ func resourceGraalSystemsUserCreate(ctx context.Context, d *schema.ResourceData,
 	apiClient := meta.apiClient
 
 	username := d.Get("name").(string)
-	description := d.Get("description").(string)
+	email := d.Get("email").(string)
 	user := &sdk.User{
-		Username:    &username,
-		Description: &description,
+		Username: &username,
+		Email:    &email,
+	}
+	if v, ok := d.GetOk("first_name"); ok {
+		s := v.(string)
+		user.Firstname = &s
+	}
+	if v, ok := d.GetOk("last_name"); ok {
+		s := v.(string)
+		user.Lastname = &s
+	}
+	if v, ok := d.GetOk("password"); ok {
+		s := v.(string)
+		user.Password = &s
 	}
 	result, _, err := apiClient.UserAPI.CreateUser(context.Background()).XTenant(meta.tenant).User(*user).Execute()
 	if err != nil {
@@ -65,8 +100,12 @@ func resourceGraalSystemsUserRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
+	// The password is never returned, and the description is not stored: both keep
+	// the configured value.
 	_ = d.Set("name", res.Username)
-	_ = d.Set("description", res.Description)
+	_ = d.Set("email", res.Email)
+	_ = d.Set("first_name", res.Firstname)
+	_ = d.Set("last_name", res.Lastname)
 
 	return nil
 }
@@ -74,12 +113,23 @@ func resourceGraalSystemsUserRead(ctx context.Context, d *schema.ResourceData, m
 func resourceGraalSystemsUserUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := m.(*Meta)
 
-	// The Terraform attribute "name" is the API field "username".
-	var ops []patchOperation
-	if d.HasChange("name") {
-		ops = append(ops, patchOperation{Op: "add", Path: "/username", Value: d.Get("name")})
+	if d.HasChange("password") {
+		return diag.Errorf("password is set at creation only: change it in the identity server " +
+			"(password reset), or recreate the user")
 	}
-	ops = append(ops, replaceChanged(d, "description")...)
+
+	// Terraform attribute → API field.
+	var ops []patchOperation
+	for attr, field := range map[string]string{
+		"name":       "username",
+		"email":      "email",
+		"first_name": "firstname",
+		"last_name":  "lastname",
+	} {
+		if d.HasChange(attr) {
+			ops = append(ops, patchOperation{Op: "add", Path: "/" + field, Value: d.Get(attr)})
+		}
+	}
 	if err := applyPatch(ctx, meta, "user", "/users/"+d.Id(), ops); err != nil {
 		return diag.FromErr(err)
 	}
