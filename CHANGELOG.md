@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.3.0 (2026-10-29)
+
+- `graalsystems_user` can create users. It now has `email` (required: the platform refuses a user
+  without it), `first_name`, `last_name` and `password` (optional, sensitive, set at creation
+  only). Before, it only sent `name` and `description`, and every creation was refused.
+- `graalsystems_user.description` is deprecated and ignored: the platform does not store a
+  description for users.
+
+Requires a graal-api that accepts users without password or first name (fixed on 2026-10-29); older
+versions refuse them.
+
 ## 1.2.2 (2026-10-29)
 
 Fixes found by applying the example configuration against a real graal installation.
