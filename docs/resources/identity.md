@@ -1,13 +1,13 @@
 ---
-page_title: "GraalSystems: graalsystems_identity"
+page_title: "graal: graalsystems_identity"
 description: |-
-Manages GraalSystems Identities.
+Manages graal Identities.
 ---
 
 # graalsystems_identity
 
-Creates and manages GraalSystems Identities.
-For more information see [the documentation](https://docs.dev.graal.systems/).
+Creates and manages graal Identities.
+For more information see [the documentation](https://graal.systems/en/docs).
 
 ## Examples
 

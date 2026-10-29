@@ -1,13 +1,13 @@
 ---
-page_title: "GraalSystems: graalsystems_project"
+page_title: "graal: graalsystems_project"
 description: |-
-Manages GraalSystems Projects.
+Manages graal Projects.
 ---
 
 # graalsystems_project
 
-Creates and manages GraalSystems Projects.
-For more information see [the documentation](https://docs.dev.graal.systems/).
+Creates and manages graal Projects.
+For more information see [the documentation](https://graal.systems/en/docs).
 
 ## Examples
 

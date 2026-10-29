@@ -1,6 +1,6 @@
 ---
 layout: "graalsystems"
-page_title: "GraalSystems: graalsystems_job"
+page_title: "graal: graalsystems_job"
 description: |-
 Gets information about an existing job.
 ---

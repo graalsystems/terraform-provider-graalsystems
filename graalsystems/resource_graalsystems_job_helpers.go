@@ -3,6 +3,7 @@ package graalsystems
 import (
 	"encoding/json"
 	"fmt"
+
 	sdk "github.com/graalsystems/sdk/go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 )
@@ -15,6 +16,7 @@ const (
 const (
 	optionTypeBash   = "bash"
 	optionTypePython = "python"
+	optionTypeSpark  = "spark"
 )
 
 const (
@@ -22,73 +24,46 @@ const (
 )
 
 var scheduleTypes = []string{scheduleTypeOnce, scheduleTypeCron}
-var optionsTypes = []string{optionTypeBash, optionTypePython}
+var optionsTypes = []string{optionTypeBash, optionTypePython, optionTypeSpark}
 var libraryTypes = []string{libraryTypeFile}
 
 func validateOptions(input interface{}) diag.Diagnostics {
-	var opts sdk.Options
-	optBytes, err := json.Marshal(input)
-	if err != nil {
-		fmt.Println("validate options marshall error:", err)
-	}
-	err = json.Unmarshal(optBytes, &opts)
-	if err != nil {
-		fmt.Println("validate options unmarshall error:", err)
-	}
-
-	if *opts.Type == optionTypeBash {
-		var opt sdk.BashOptions
-		err = json.Unmarshal(optBytes, &opt)
-		if err != nil {
-			fmt.Println("bash options unmarshall error:", err)
+	opts, _ := input.(map[string]interface{})
+	str := func(k string) string { v, _ := opts[k].(string); return v }
+	switch str("type") {
+	case optionTypeBash:
+		if lines, _ := opts["lines"].([]interface{}); len(lines) == 0 {
+			return diag.FromErr(fmt.Errorf("lines is required for options type %s", optionTypeBash))
 		}
-		if len(opt.Lines) == 0 {
-			return diag.FromErr(fmt.Errorf("lines parameter is required for options type %s", optionTypeBash))
+	case optionTypePython:
+		if str("file") == "" && str("module") == "" {
+			return diag.FromErr(fmt.Errorf("file or module is required for options type %s", optionTypePython))
 		}
-	}
-	if *opts.Type == optionTypePython {
-		var opt sdk.PythonOptions
-		err = json.Unmarshal(optBytes, &opt)
-		if err != nil {
-			fmt.Println("python options unmarshall error:", err)
-		}
-		if *opt.Module == "" {
-			return diag.FromErr(fmt.Errorf("module parameter is required for options type %s", optionTypePython))
+	case optionTypeSpark:
+		if str("file") == "" && str("main_class_name") == "" {
+			return diag.FromErr(fmt.Errorf("file or main_class_name is required for options type %s", optionTypeSpark))
 		}
 	}
 	return nil
 }
 
+// defineOptions builds the options object of a job from the schema block,
+// leaving out unset attributes.
 func defineOptions(input interface{}) sdk.IOptions {
-	var opts sdk.Options
-	optBytes, err := json.Marshal(input)
-	if err != nil {
-		fmt.Println("options definition marshall error:", err)
-	}
-	err = json.Unmarshal(optBytes, &opts)
-	if err != nil {
-		fmt.Println("options definition unmarshall error:", err)
-	}
-	if *opts.Type == optionTypeBash {
-		var opt sdk.BashOptions
-		err = json.Unmarshal(optBytes, &opt)
-		if err != nil {
-			fmt.Println("bash options definition unmarshall error:", err)
+	opts, _ := input.(map[string]interface{})
+	out := map[string]interface{}{}
+	for _, k := range []string{"type", "instance_type", "docker_image", "file", "module", "main_class_name"} {
+		if v, _ := opts[k].(string); v != "" {
+			out[k] = v
 		}
-		if opt.Lines == nil {
-
-		}
-		return opt
 	}
-	if *opts.Type == optionTypePython {
-		var opt sdk.PythonOptions
-		err = json.Unmarshal(optBytes, &opt)
-		if err != nil {
-			fmt.Println("python options definition unmarshall error:", err)
-		}
-		return opt
+	if lines, _ := opts["lines"].([]interface{}); len(lines) > 0 {
+		out["lines"] = toStringList(lines)
 	}
-	return nil
+	if env, _ := opts["env"].(map[string]interface{}); len(env) > 0 {
+		out["env"] = toStringMap(env)
+	}
+	return out
 }
 
 func validateSchedule(input interface{}) diag.Diagnostics {

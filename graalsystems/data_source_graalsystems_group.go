@@ -18,6 +18,8 @@ func dataSourceGraalSystemsGroup() *schema.Resource {
 		Description: "The ID of the group",
 	}
 
+	dsSchema["name"].Optional = true
+
 	return &schema.Resource{
 		ReadContext: dataSourceGraalSystemsGroupRead,
 		Schema:      dsSchema,
@@ -29,8 +31,7 @@ func dataSourceGraalSystemsGroupRead(ctx context.Context, d *schema.ResourceData
 	apiClient := meta.apiClient
 
 	var group sdk.Group
-	groupId, ok := d.Get("group_id").(string)
-	if ok {
+	if groupId := d.Get("group_id").(string); groupId != "" {
 		p, _, err := apiClient.GroupAPI.FindGroupById(context.Background(), groupId).XTenant(meta.tenant).Execute()
 		if err != nil {
 			return diag.FromErr(err)
@@ -41,6 +42,17 @@ func dataSourceGraalSystemsGroupRead(ctx context.Context, d *schema.ResourceData
 		if err != nil {
 			return diag.FromErr(err)
 		}
+		name := d.Get("name").(string)
+		if name == "" {
+			return diag.FromErr(fmt.Errorf("either group_id or name must be set"))
+		}
+		var matches []sdk.Group
+		for _, item := range groups {
+			if deref(item.Name) == name {
+				matches = append(matches, item)
+			}
+		}
+		groups = matches
 		if len(groups) == 0 {
 			return diag.FromErr(fmt.Errorf("no group found with the name %s", d.Get("name")))
 		}

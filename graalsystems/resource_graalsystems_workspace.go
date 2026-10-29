@@ -3,21 +3,21 @@ package graalsystems
 import (
 	"context"
 	"fmt"
+	"slices"
+
 	sdk "github.com/graalsystems/sdk/go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"slices"
 )
 
+// Workspace types available on the platform (Jupyter, VS Code and RStudio).
 const (
-	workspaceTypeJupyter  = "jupyter"
-	workspaceTypeMetabase = "metabase"
-	workspaceTypeSuperset = "superset"
-	workspaceTypeVsCode   = "vscode"
-	workspaceTypeZeppelin = "zeppelin"
+	workspaceTypeJupyter = "jupyter"
+	workspaceTypeVsCode  = "vscode"
+	workspaceTypeRStudio = "rstudio"
 )
 
-var workspaceTypes = []string{workspaceTypeJupyter, workspaceTypeMetabase, workspaceTypeSuperset, workspaceTypeVsCode, workspaceTypeZeppelin}
+var workspaceTypes = []string{workspaceTypeJupyter, workspaceTypeVsCode, workspaceTypeRStudio}
 
 // resourceGraalSystemsWorkspace defines the schema for the workspace resource
 // It also implements the CRUD methods
@@ -44,7 +44,8 @@ func resourceGraalSystemsWorkspace() *schema.Resource {
 			"type": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The type of the workspace",
+				ForceNew:    true,
+				Description: "The type of the workspace. Changing it recreates the workspace",
 				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
 					if !slices.Contains(workspaceTypes, val.(string)) {
 						errs = append(errs, fmt.Errorf("%q must be one of %q, got: %s", key, workspaceTypes, val))
@@ -55,12 +56,14 @@ func resourceGraalSystemsWorkspace() *schema.Resource {
 			"infrastructure_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The id of the infrastructure to deploy the workspace on",
+				ForceNew:    true,
+				Description: "The id of the infrastructure to deploy the workspace on. Changing it recreates the workspace",
 			},
 			"instance_type": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The instance type of the compute used for the workspace",
+				ForceNew:    true,
+				Description: "The instance type of the compute used for the workspace. Changing it recreates the workspace",
 			},
 			"owner": {
 				Type:        schema.TypeString,
@@ -152,25 +155,10 @@ func resourceGraalSystemsWorkspaceRead(_ context.Context, d *schema.ResourceData
 // resourceGraalSystemsWorkspaceUpdate updates a workspace
 func resourceGraalSystemsWorkspaceUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := m.(*Meta)
-	apiClient := meta.apiClient
 
-	if d.HasChange("type") || d.HasChange("infrastructure_id") || d.HasChange("instance_type") {
-		return diag.FromErr(fmt.Errorf("once created, you cannot change the following workspace properties: " +
-			"['type', 'infrastructure_id', 'instance_type'] \nDelete the workspace and create a new one"))
-	}
-
-	if d.HasChange("name") {
-		_, _, err := apiClient.WorkspaceAPI.UpdateWorkspace(context.Background(), d.Id()).XTenant(meta.tenant).Patch(patchFromResourceData(d, "name")).Execute()
-		if err != nil {
-			return diag.FromErr(err)
-		}
-	}
-
-	if d.HasChange("description") {
-		_, _, err := apiClient.WorkspaceAPI.UpdateWorkspace(context.Background(), d.Id()).XTenant(meta.tenant).Patch(patchFromResourceData(d, "description")).Execute()
-		if err != nil {
-			return diag.FromErr(err)
-		}
+	ops := replaceChanged(d, "name", "description")
+	if err := applyPatch(ctx, meta, "/workspaces/"+d.Id(), ops); err != nil {
+		return diag.FromErr(err)
 	}
 
 	return resourceGraalSystemsWorkspaceRead(ctx, d, meta)

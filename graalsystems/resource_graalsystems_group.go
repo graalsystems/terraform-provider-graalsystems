@@ -12,7 +12,6 @@ func resourceGraalSystemsGroup() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceGraalSystemsGroupCreate,
 		ReadContext:   resourceGraalSystemsGroupRead,
-		UpdateContext: resourceGraalSystemsGroupUpdate,
 		DeleteContext: resourceGraalSystemsGroupDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -21,12 +20,14 @@ func resourceGraalSystemsGroup() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The name of the project",
+				ForceNew:    true,
+				Description: "The name of the group. Changing it recreates the group",
 			},
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "The description of the project",
+				ForceNew:    true,
+				Description: "The description of the group. Changing it recreates the group",
 			},
 		},
 	}
@@ -38,11 +39,11 @@ func resourceGraalSystemsGroupCreate(ctx context.Context, d *schema.ResourceData
 
 	name := d.Get("name").(string)
 	description := d.Get("description").(string)
-	project := &sdk.Group{
+	group := &sdk.Group{
 		Name:        &name,
 		Description: &description,
 	}
-	result, _, err := apiClient.GroupAPI.CreateGroup(context.Background()).XTenant(meta.tenant).Group(*project).Execute()
+	result, _, err := apiClient.GroupAPI.CreateGroup(context.Background()).XTenant(meta.tenant).Group(*group).Execute()
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -69,31 +70,6 @@ func resourceGraalSystemsGroupRead(ctx context.Context, d *schema.ResourceData, 
 	_ = d.Set("description", res.Description)
 
 	return nil
-}
-
-func resourceGraalSystemsGroupUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	meta := m.(*Meta)
-	//apiClient := meta.apiClient
-
-	//if d.HasChange("name") {
-	//	path := "/name"
-	//
-	//	value := make(map[string]interface{})
-	//	value["name"] = d.Get("name").(string)
-	//
-	//	patch := &sdk.Patch{
-	//		Op:    nil,
-	//		Path:  &path,
-	//		Value: &value,
-	//	}
-	//	patchs := &[]sdk.Patch{*patch}
-	//	_, _, err := apiClient.GroupAPI.UpdateGroup(context.Background(), d.Id()).XTenant(meta.tenant).Patch(*patchs).Execute()
-	//	if err != nil {
-	//		return diag.FromErr(err)
-	//	}
-	//}
-
-	return resourceGraalSystemsGroupRead(ctx, d, meta)
 }
 
 func resourceGraalSystemsGroupDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

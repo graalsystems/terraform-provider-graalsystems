@@ -1,13 +1,13 @@
 ---
-page_title: "GraalSystems: graalsystems_workflow"
+page_title: "graal: graalsystems_workflow"
 description: |-
-Manages GraalSystems Workflows.
+Manages graal Workflows.
 ---
 
 # graalsystems_workflow
 
-Creates and manages GraalSystems Workflows.
-For more information see [the documentation](https://docs.dev.graal.systems/).
+Creates and manages graal Workflows.
+For more information see [the documentation](https://graal.systems/en/docs).
 
 ## Example usage
 

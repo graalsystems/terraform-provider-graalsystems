@@ -1,13 +1,13 @@
 ---
-page_title: "GraalSystems: graalsystems_workspace"
+page_title: "graal: graalsystems_workspace"
 description: |-
-Manages GraalSystems Workspaces.
+Manages graal Workspaces.
 ---
 
 # graalsystems_workspace
 
-Creates and manages GraalSystems Workspaces.
-For more information see [the documentation](https://docs.dev.graal.systems/).
+Creates and manages graal Workspaces.
+For more information see [the documentation](https://graal.systems/en/docs).
 
 ## Example usage
 
@@ -20,7 +20,7 @@ resource "graalsystems_workspace" "my_workspace" {
   type        = "vscode"
   
   infrastructure_id = "infra-id"
-  instance_type     = "t3.medium"
+  instance_type     = "Standard_Development_D1_v1"
 }
 ```
 
@@ -32,7 +32,7 @@ The following arguments are supported:
 - `infrastructure_id` - (Required) The ID of the infrastructure the workspace will be deployed to.
 - `instance_type` - (Required) The compute instance type used to run the workspace.
 - `name` - (Required) The name of the workspace.
-- `type` (Required) The type of workspace to deploy.
+- `type` (Required) The type of workspace: `jupyter`, `vscode` (code-server) or `rstudio`.
 
 ## Attributes Reference
 
@@ -43,3 +43,5 @@ This resource exports the following attributes in addition to the arguments abov
 - `status` - The status of the workspace.
 - `version` - The version of the workspace according to its type.
 - `public_url` - The URL to access the workspace.
+
+Changing `type`, `infrastructure_id` or `instance_type` deletes the workspace and creates a new one.

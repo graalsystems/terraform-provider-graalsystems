@@ -1,6 +1,6 @@
 ---
 layout: "graalsystems"
-page_title: "GraalSystems: graalsystems_identity"
+page_title: "graal: graalsystems_identity"
 description: |-
 Gets information about an existing identity.
 ---

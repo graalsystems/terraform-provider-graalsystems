@@ -18,6 +18,8 @@ func dataSourceGraalSystemsJob() *schema.Resource {
 		Description: "The ID of the job",
 	}
 
+	dsSchema["name"].Optional = true
+
 	return &schema.Resource{
 		ReadContext: dataSourceGraalSystemsJobRead,
 		Schema:      dsSchema,
@@ -29,8 +31,7 @@ func dataSourceGraalSystemsJobRead(ctx context.Context, d *schema.ResourceData, 
 	apiClient := meta.apiClient
 
 	var job sdk.Job
-	jobId, ok := d.Get("job_id").(string)
-	if ok {
+	if jobId := d.Get("job_id").(string); jobId != "" {
 		p, _, err := apiClient.JobAPI.FindJobByJobId(context.Background(), jobId).XTenant(meta.tenant).Execute()
 		if err != nil {
 			return diag.FromErr(err)
@@ -41,6 +42,17 @@ func dataSourceGraalSystemsJobRead(ctx context.Context, d *schema.ResourceData, 
 		if err != nil {
 			return diag.FromErr(err)
 		}
+		name := d.Get("name").(string)
+		if name == "" {
+			return diag.FromErr(fmt.Errorf("either job_id or name must be set"))
+		}
+		var matches []sdk.Job
+		for _, item := range jobs {
+			if deref(item.Name) == name {
+				matches = append(matches, item)
+			}
+		}
+		jobs = matches
 		if len(jobs) == 0 {
 			return diag.FromErr(fmt.Errorf("no job found with the name %s", d.Get("name")))
 		}

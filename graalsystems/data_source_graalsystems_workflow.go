@@ -3,10 +3,11 @@ package graalsystems
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	sdk "github.com/graalsystems/sdk/go"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"strings"
 )
 
 // dataSourceGraalSystemsWorkflow returns a datasource that can be used to retrieve a workflow from the GraalSystems API

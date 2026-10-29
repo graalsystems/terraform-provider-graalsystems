@@ -21,7 +21,7 @@ func resourceGraalSystemsUser() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The name of the user",
+				Description: "The username of the user",
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -36,7 +36,7 @@ func resourceGraalSystemsUserCreate(ctx context.Context, d *schema.ResourceData,
 	meta := m.(*Meta)
 	apiClient := meta.apiClient
 
-	username := d.Get("username").(string)
+	username := d.Get("name").(string)
 	description := d.Get("description").(string)
 	user := &sdk.User{
 		Username:    &username,
@@ -65,7 +65,7 @@ func resourceGraalSystemsUserRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	_ = d.Set("username", res.Username)
+	_ = d.Set("name", res.Username)
 	_ = d.Set("description", res.Description)
 
 	return nil
@@ -73,23 +73,15 @@ func resourceGraalSystemsUserRead(ctx context.Context, d *schema.ResourceData, m
 
 func resourceGraalSystemsUserUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	meta := m.(*Meta)
-	apiClient := meta.apiClient
 
-	if d.HasChange("username") {
-		path := "/username"
-
-		value := d.Get("username").(string)
-
-		patch := &sdk.Patch{
-			Op:    nil,
-			Path:  &path,
-			Value: &value,
-		}
-		patchs := &[]sdk.Patch{*patch}
-		_, _, err := apiClient.UserAPI.UpdateUser(context.Background(), d.Id()).XTenant(meta.tenant).Patch(*patchs).Execute()
-		if err != nil {
-			return diag.FromErr(err)
-		}
+	// The Terraform attribute "name" is the API field "username".
+	var ops []patchOperation
+	if d.HasChange("name") {
+		ops = append(ops, patchOperation{Op: "replace", Path: "/username", Value: d.Get("name")})
+	}
+	ops = append(ops, replaceChanged(d, "description")...)
+	if err := applyPatch(ctx, meta, "/users/"+d.Id(), ops); err != nil {
+		return diag.FromErr(err)
 	}
 
 	return resourceGraalSystemsUserRead(ctx, d, meta)
