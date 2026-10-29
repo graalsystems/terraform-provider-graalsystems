@@ -1,11 +1,17 @@
 # Changelog
 
+## 1.2.1 (2026-10-29)
+
+- `graalsystems_workspace`: `type` accepts every workspace type the platform serves again:
+  `jupyter`, `vscode`, `rstudio`, `grafana`, `superset`, `metabase` and `zeppelin`. 1.2.0 had
+  wrongly limited it to `jupyter`, `vscode` and `rstudio`; that breaking change is withdrawn.
+
 ## 1.2.0 (2026-10-29)
 
 ### Breaking changes
 
-- `graalsystems_workspace`: `type` accepts `jupyter`, `vscode` and `rstudio`, the workspaces
-  offered by the platform (`metabase`, `superset` and `zeppelin` were removed).
+- `graalsystems_workspace`: `type` accepts `jupyter`, `vscode` and `rstudio` (withdrawn in 1.2.1:
+  the platform also serves `grafana`, `superset`, `metabase` and `zeppelin`).
 - `graalsystems_group`: the API cannot edit groups, so changing `name` or `description` now
   recreates the group instead of silently doing nothing.
 

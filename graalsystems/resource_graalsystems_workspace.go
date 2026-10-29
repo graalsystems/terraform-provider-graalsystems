@@ -10,14 +10,21 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-// Workspace types available on the platform (Jupyter, VS Code and RStudio).
+// Workspace types served by the platform.
 const (
-	workspaceTypeJupyter = "jupyter"
-	workspaceTypeVsCode  = "vscode"
-	workspaceTypeRStudio = "rstudio"
+	workspaceTypeJupyter  = "jupyter"
+	workspaceTypeVsCode   = "vscode"
+	workspaceTypeRStudio  = "rstudio"
+	workspaceTypeGrafana  = "grafana"
+	workspaceTypeSuperset = "superset"
+	workspaceTypeMetabase = "metabase"
+	workspaceTypeZeppelin = "zeppelin"
 )
 
-var workspaceTypes = []string{workspaceTypeJupyter, workspaceTypeVsCode, workspaceTypeRStudio}
+var workspaceTypes = []string{
+	workspaceTypeJupyter, workspaceTypeVsCode, workspaceTypeRStudio,
+	workspaceTypeGrafana, workspaceTypeSuperset, workspaceTypeMetabase, workspaceTypeZeppelin,
+}
 
 // resourceGraalSystemsWorkspace defines the schema for the workspace resource
 // It also implements the CRUD methods
