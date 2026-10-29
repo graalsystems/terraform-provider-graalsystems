@@ -1,0 +1,40 @@
+# Publishes a draft release made by the Release workflow (the Terraform Registry only sees
+# published releases), and optionally deletes another draft and its tag.
+name: Publish release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Draft release to publish, without the v, e.g. 1.2.1"
+        required: true
+      discard:
+        description: "Optional draft to delete with its tag (never a published release), e.g. 1.2.0"
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Delete the discarded draft
+        if: inputs.discard != ''
+        env:
+          TAG: v${{ inputs.discard }}
+        run: |
+          draft=$(gh release view "$TAG" --repo "$REPO" --json isDraft --jq .isDraft)
+          if [ "$draft" != "true" ]; then
+            echo "$TAG is not a draft release: refusing to delete it"; exit 1
+          fi
+          gh release delete "$TAG" --repo "$REPO" --yes --cleanup-tag
+      - name: Publish the release
+        env:
+          TAG: v${{ inputs.version }}
+        run: |
+          gh release edit "$TAG" --repo "$REPO" --draft=false --latest
+          gh release view "$TAG" --repo "$REPO" --json tagName,isDraft,url
