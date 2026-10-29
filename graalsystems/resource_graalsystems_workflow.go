@@ -235,7 +235,7 @@ func resourceGraalSystemsWorkflowUpdate(ctx context.Context, d *schema.ResourceD
 			if diagnostics := validateSchedule(sch[0]); diagnostics != nil {
 				return diagnostics
 			}
-			ops = append(ops, patchOperation{Op: "replace", Path: "/schedule", Value: defineSchedule(sch[0])})
+			ops = append(ops, patchOperation{Op: "add", Path: "/schedule", Value: defineSchedule(sch[0])})
 		}
 	}
 	if d.HasChange("job") {
@@ -243,9 +243,9 @@ func resourceGraalSystemsWorkflowUpdate(ctx context.Context, d *schema.ResourceD
 		if err := validateJobs(jobs); err != nil {
 			return diag.FromErr(err)
 		}
-		ops = append(ops, patchOperation{Op: "replace", Path: "/tasks", Value: defineTasks(jobs, "job")})
+		ops = append(ops, patchOperation{Op: "add", Path: "/tasks", Value: defineTasks(jobs, "job")})
 	}
-	if err := applyPatch(ctx, meta, "/workflows/"+d.Id(), ops); err != nil {
+	if err := applyPatch(ctx, meta, "workflow", "/workflows/"+d.Id(), ops); err != nil {
 		return diag.FromErr(err)
 	}
 

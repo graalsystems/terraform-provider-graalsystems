@@ -41,9 +41,12 @@ func resourceGraalSystemsJob() *schema.Resource {
 				Description: "The identity id of the identity used to run the job",
 			},
 			"timeout_seconds": {
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Description: "Maximum duration of the job",
+				Type:     schema.TypeInt,
+				Optional: true,
+				// The API sets a default (3600 s) when the field is omitted: without
+				// Computed, every plan would try to set it back to null.
+				Computed:    true,
+				Description: "Maximum duration of the job, in seconds. Defaults to the platform's value (3600).",
 				ValidateFunc: func(val any, key string) (warns []string, errs []error) {
 					v := val.(int)
 					if v < 0 {
@@ -58,7 +61,8 @@ func resourceGraalSystemsJob() *schema.Resource {
 			"max_retries": {
 				Type:        schema.TypeInt,
 				Optional:    true,
-				Description: "Maximum retries in case of failure",
+				Computed:    true,
+				Description: "Maximum retries in case of failure. Defaults to the platform's value.",
 				ValidateFunc: func(val any, key string) (warns []string, errs []error) {
 					v := val.(int)
 					if v < 0 {
@@ -368,7 +372,7 @@ func resourceGraalSystemsJobUpdate(ctx context.Context, d *schema.ResourceData, 
 			continue
 		}
 		if v, ok := d.GetOk(attr); ok {
-			ops = append(ops, patchOperation{Op: "replace", Path: "/" + attr, Value: v})
+			ops = append(ops, patchOperation{Op: "add", Path: "/" + attr, Value: v})
 		} else {
 			ops = append(ops, patchOperation{Op: "remove", Path: "/" + attr})
 		}
@@ -378,7 +382,7 @@ func resourceGraalSystemsJobUpdate(ctx context.Context, d *schema.ResourceData, 
 		if diagnostics := validateOptions(opts[0]); diagnostics != nil {
 			return diagnostics
 		}
-		ops = append(ops, patchOperation{Op: "replace", Path: "/options", Value: defineOptions(opts[0])})
+		ops = append(ops, patchOperation{Op: "add", Path: "/options", Value: defineOptions(opts[0])})
 	}
 	if d.HasChange("schedule") {
 		sch := d.Get("schedule").([]interface{})
@@ -388,7 +392,7 @@ func resourceGraalSystemsJobUpdate(ctx context.Context, d *schema.ResourceData, 
 			if diagnostics := validateSchedule(sch[0]); diagnostics != nil {
 				return diagnostics
 			}
-			ops = append(ops, patchOperation{Op: "replace", Path: "/schedule", Value: defineSchedule(sch[0])})
+			ops = append(ops, patchOperation{Op: "add", Path: "/schedule", Value: defineSchedule(sch[0])})
 		}
 	}
 	if d.HasChange("library") {
@@ -396,9 +400,9 @@ func resourceGraalSystemsJobUpdate(ctx context.Context, d *schema.ResourceData, 
 		if diagnostics := validateLibraries(libs); diagnostics != nil {
 			return diagnostics
 		}
-		ops = append(ops, patchOperation{Op: "replace", Path: "/libraries", Value: defineLibraries(libs)})
+		ops = append(ops, patchOperation{Op: "add", Path: "/libraries", Value: defineLibraries(libs)})
 	}
-	if err := applyPatch(ctx, meta, "/jobs/"+d.Id(), ops); err != nil {
+	if err := applyPatch(ctx, meta, "job", "/jobs/"+d.Id(), ops); err != nil {
 		return diag.FromErr(err)
 	}
 

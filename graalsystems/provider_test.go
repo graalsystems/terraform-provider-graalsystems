@@ -50,6 +50,11 @@ func fakePlatform(t *testing.T, patches *[]string) *httptest.Server {
 			assert.Equal(t, "Bearer t0k3n", r.Header.Get("Authorization"))
 			assert.Equal(t, "acme", r.Header.Get("X-Tenant"))
 			assert.Equal(t, "application/json-patch+json;charset=UTF-8", r.Header.Get("Content-Type"))
+			// As strict as the API: only the vendor media type of the resource is acceptable.
+			if r.Header.Get("Accept") != "application/vnd.graal.systems.v1.job+json" {
+				w.WriteHeader(http.StatusNotAcceptable)
+				return
+			}
 			body, _ := io.ReadAll(r.Body)
 			*patches = append(*patches, string(body))
 			_, _ = io.WriteString(w, `{}`)
@@ -76,22 +81,22 @@ func TestBuildApi_ApplicationAuthAndJSONPatch(t *testing.T) {
 
 	meta := &Meta{apiClient: client, tenant: "acme"}
 	ops := []patchOperation{
-		{Op: "replace", Path: "/timeout_seconds", Value: 600},
-		{Op: "replace", Path: "/labels", Value: map[string]interface{}{"team": "data"}},
+		{Op: "add", Path: "/timeout_seconds", Value: 600},
+		{Op: "add", Path: "/labels", Value: map[string]interface{}{"team": "data"}},
 		{Op: "remove", Path: "/schedule"},
 	}
-	require.NoError(t, applyPatch(ctx, meta, "/jobs/j1", ops))
+	require.NoError(t, applyPatch(ctx, meta, "job", "/jobs/j1", ops))
 	require.Len(t, patches, 1)
 
 	var sent []map[string]interface{}
 	require.NoError(t, json.Unmarshal([]byte(patches[0]), &sent))
 	assert.Equal(t, []map[string]interface{}{
-		{"op": "replace", "path": "/timeout_seconds", "value": float64(600)},
-		{"op": "replace", "path": "/labels", "value": map[string]interface{}{"team": "data"}},
+		{"op": "add", "path": "/timeout_seconds", "value": float64(600)},
+		{"op": "add", "path": "/labels", "value": map[string]interface{}{"team": "data"}},
 		{"op": "remove", "path": "/schedule"},
 	}, sent)
 
-	err = applyPatch(ctx, meta, "/projects/unknown", ops)
+	err = applyPatch(ctx, meta, "project", "/projects/unknown", ops)
 	assert.ErrorContains(t, err, "HTTP 404")
 }
 
@@ -114,8 +119,8 @@ func TestReplaceChanged(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, r.Schema, map[string]interface{}{"name": "Sales", "description": "Analytics"})
 	ops := replaceChanged(d, "name", "description")
 	assert.Equal(t, []patchOperation{
-		{Op: "replace", Path: "/name", Value: "Sales"},
-		{Op: "replace", Path: "/description", Value: "Analytics"},
+		{Op: "add", Path: "/name", Value: "Sales"},
+		{Op: "add", Path: "/description", Value: "Analytics"},
 	}, ops)
 }
 

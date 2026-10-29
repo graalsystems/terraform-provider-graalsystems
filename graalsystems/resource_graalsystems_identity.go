@@ -75,7 +75,7 @@ func resourceGraalSystemsIdentityUpdate(ctx context.Context, d *schema.ResourceD
 	meta := m.(*Meta)
 
 	ops := replaceChanged(d, "name", "description")
-	if err := applyPatch(ctx, meta, "/identities/"+d.Id(), ops); err != nil {
+	if err := applyPatch(ctx, meta, "identity", "/identities/"+d.Id(), ops); err != nil {
 		return diag.FromErr(err)
 	}
 
