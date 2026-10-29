@@ -1,4 +1,5 @@
-# Publishes the provider when a v* tag is pushed (e.g. v1.1.0).
+# Publishes the provider when a v* tag is pushed (e.g. v1.2.0), or when run by hand
+# from the default branch with a version (the workflow then creates the tag).
 #
 # Requires the GPG_PRIVATE_KEY and PASSPHRASE secrets; the public key must be
 # registered in the Terraform Registry for the graalsystems namespace.
@@ -8,6 +9,12 @@ on:
   push:
     tags:
       - 'v*'
+  # Manual release from the default branch: the tag is created first.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, without the v, e.g. 1.2.0"
+        required: true
 
 permissions:
   contents: write
@@ -28,6 +35,17 @@ jobs:
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
+      # After the GPG import, so missing signing secrets fail before a tag exists.
+      - name: Create the tag
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          TAG: v${{ inputs.version }}
+        run: |
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "Tag $TAG already exists"; exit 1
+          fi
+          git tag "$TAG" "$GITHUB_SHA"
+          git push origin "$TAG"
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:

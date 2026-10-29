@@ -62,7 +62,8 @@ then run `go install` and use Terraform as usual (skip `terraform init`).
 
 ## Releasing
 
-Push a `v*` tag (for example `v1.2.0`). The release workflow builds the provider for all
+Push a `v*` tag (for example `v1.2.0`), or run the Release workflow by hand from `main` with
+the version (Actions → Release → Run workflow), which creates the tag. The release workflow builds the provider for all
 platforms with GoReleaser, signs the checksums with the GPG key stored in the `GPG_PRIVATE_KEY`
 and `PASSPHRASE` secrets, and creates a draft GitHub release. Publish it to make the version
 available on the Terraform Registry.
