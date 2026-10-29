@@ -22,7 +22,7 @@ terraform {
   required_providers {
     graalsystems = {
       source  = "graalsystems/graalsystems"
-      version = "~> 1.1"
+      version = "~> 1.2"
     }
   }
 }
