@@ -46,6 +46,10 @@ func fakePlatform(t *testing.T, patches *[]string) *httptest.Server {
 			assert.Equal(t, "client_credentials", r.Form.Get("grant_type"))
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = io.WriteString(w, `{"access_token":"t0k3n","token_type":"Bearer","expires_in":300}`)
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/workspaces/w1":
+			// A workspace that is starting: no version, status nor public URL yet.
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = io.WriteString(w, `{"id":"w1","name":"dash","type":"grafana","infrastructure_id":"i1","instance_type":"Standard_Development_D1_v1"}`)
 		case r.Method == http.MethodPatch && strings.HasPrefix(r.URL.Path, "/api/v1/jobs/"):
 			assert.Equal(t, "Bearer t0k3n", r.Header.Get("Authorization"))
 			assert.Equal(t, "acme", r.Header.Get("X-Tenant"))
@@ -163,4 +167,26 @@ func TestWorkspaceTypes(t *testing.T) {
 	}
 	_, errs := validate("notebook", "type")
 	assert.NotEmpty(t, errs)
+}
+
+func TestWorkspaceReadWhileStarting(t *testing.T) {
+	var patches []string
+	srv := fakePlatform(t, &patches)
+	defer srv.Close()
+
+	client, err := buildApi(context.Background(), authSettings{
+		apiURL: srv.URL + "/api/v1", authURL: srv.URL, tenant: "acme",
+		applicationID: "ci-bot", applicationSecret: "secret",
+	}, "test")
+	require.NoError(t, err)
+
+	r := resourceGraalSystemsWorkspace()
+	d := schema.TestResourceDataRaw(t, r.Schema, map[string]interface{}{})
+	d.SetId("w1")
+	// Used to panic: version, status and public_url were dereferenced while still empty.
+	diags := resourceGraalSystemsWorkspaceRead(context.Background(), d, &Meta{apiClient: client, tenant: "acme"})
+	require.False(t, diags.HasError(), "%v", diags)
+	assert.Equal(t, "grafana", d.Get("type"))
+	assert.Equal(t, "", d.Get("status"))
+	assert.Equal(t, "", d.Get("public_url"))
 }

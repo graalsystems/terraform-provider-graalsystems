@@ -119,13 +119,16 @@ func resourceGraalSystemsWorkspaceCreate(ctx context.Context, d *schema.Resource
 		InstanceType:     &instanceType,
 		Owner:            user.Id,
 	}
-	if result, request, err := apiClient.WorkspaceAPI.CreateWorkspace(context.Background()).XTenant(meta.tenant).Workspace(*workspace).Execute(); err != nil {
+	// The API answers 201 (or 200, both declared by the contract) with the workspace. A 200 used to be
+	// reported as an error, which left the created workspace outside the state.
+	result, _, err := apiClient.WorkspaceAPI.CreateWorkspace(context.Background()).XTenant(meta.tenant).Workspace(*workspace).Execute()
+	if err != nil {
 		return diag.FromErr(err)
-	} else if request != nil && request.StatusCode == 200 {
-		return diag.FromErr(fmt.Errorf("workspace created, but could not retrieve its info. Check that every parameter you entered is valid. InfrastructureId:%s ; InstanceType:%s", infrastructureId, instanceType))
-	} else {
-		d.SetId(*result.Id)
 	}
+	if result == nil || result.Id == nil {
+		return diag.FromErr(fmt.Errorf("workspace created, but the API returned no id (infrastructure_id %s, instance_type %s)", infrastructureId, instanceType))
+	}
+	d.SetId(*result.Id)
 
 	return resourceGraalSystemsWorkspaceRead(ctx, d, meta)
 }
@@ -151,10 +154,12 @@ func resourceGraalSystemsWorkspaceRead(_ context.Context, d *schema.ResourceData
 	_ = d.Set("type", res.Type)
 	_ = d.Set("infrastructure_id", res.InfrastructureId)
 	_ = d.Set("instance_type", res.InstanceType)
-	_ = d.Set("owner", *res.Owner)
-	_ = d.Set("version", *res.Version)
-	_ = d.Set("status", *res.Status)
-	_ = d.Set("public_url", *res.PublicUrl)
+	// Version, status and public URL are empty while the workspace starts: set the pointers as they
+	// are (nil becomes ""), never dereference them.
+	_ = d.Set("owner", res.Owner)
+	_ = d.Set("version", res.Version)
+	_ = d.Set("status", res.Status)
+	_ = d.Set("public_url", res.PublicUrl)
 
 	return nil
 }

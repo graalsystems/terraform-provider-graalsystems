@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.1 (2026-11-01)
+
+Fixes found by applying a `graalsystems_workspace` against a real graal installation (k3d).
+
+- `graalsystems_workspace`: the provider crashed after creating a workspace (nil pointer): the
+  version, status and public URL are empty while the workspace starts. They are now read as they
+  are, and `status` follows the workspace (`starting`, then `running`) on the next refresh.
+- `graalsystems_workspace`: a 200 answer to the creation was reported as an error, which left the
+  created workspace outside the Terraform state.
+
 ## 1.3.0 (2026-10-29)
 
 - `graalsystems_user` can create users. It now has `email` (required: the platform refuses a user
