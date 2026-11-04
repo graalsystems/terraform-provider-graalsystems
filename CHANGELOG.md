@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.0 (2026-11-01)
+
+- `graalsystems_user.description` is a real attribute again: sent at creation, updated with JSON
+  Patch and read back. graal-api stores it since November 2026; it was deprecated and ignored in
+  1.3.x because the platform dropped it.
+
 ## 1.3.1 (2026-11-01)
 
 Fixes found by applying a `graalsystems_workspace` against a real graal installation (k3d).

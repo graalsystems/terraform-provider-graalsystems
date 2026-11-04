@@ -48,8 +48,7 @@ func resourceGraalSystemsUser() *schema.Resource {
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Deprecated:  "The platform does not store a description for users; this attribute is ignored.",
-				Description: "Ignored: the platform does not store a description for users.",
+				Description: "The description of the user (stored by graal-api since November 2026; ignored before)",
 			},
 		},
 	}
@@ -72,6 +71,10 @@ func resourceGraalSystemsUserCreate(ctx context.Context, d *schema.ResourceData,
 	if v, ok := d.GetOk("last_name"); ok {
 		s := v.(string)
 		user.Lastname = &s
+	}
+	if v, ok := d.GetOk("description"); ok {
+		s := v.(string)
+		user.Description = &s
 	}
 	if v, ok := d.GetOk("password"); ok {
 		s := v.(string)
@@ -100,9 +103,9 @@ func resourceGraalSystemsUserRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(err)
 	}
 
-	// The password is never returned, and the description is not stored: both keep
-	// the configured value.
+	// The password is never returned: it keeps the configured value.
 	_ = d.Set("name", res.Username)
+	_ = d.Set("description", res.Description)
 	_ = d.Set("email", res.Email)
 	_ = d.Set("first_name", res.Firstname)
 	_ = d.Set("last_name", res.Lastname)
@@ -121,10 +124,11 @@ func resourceGraalSystemsUserUpdate(ctx context.Context, d *schema.ResourceData,
 	// Terraform attribute → API field.
 	var ops []patchOperation
 	for attr, field := range map[string]string{
-		"name":       "username",
-		"email":      "email",
-		"first_name": "firstname",
-		"last_name":  "lastname",
+		"name":        "username",
+		"email":       "email",
+		"first_name":  "firstname",
+		"last_name":   "lastname",
+		"description": "description",
 	} {
 		if d.HasChange(attr) {
 			ops = append(ops, patchOperation{Op: "add", Path: "/" + field, Value: d.Get(attr)})

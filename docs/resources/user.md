@@ -43,5 +43,5 @@ The following arguments are supported:
 - `password` - (Optional, Sensitive) Initial password, set at creation only. Without it, the user
   signs in through an identity provider or after a password reset. Changing it afterwards is
   refused: reset the password in the identity server, or recreate the user.
-- `description` - (Optional, Deprecated) Ignored: the platform does not store a description for
-  users.
+- `description` - (Optional) The description of the user. Stored by graal-api since November 2026;
+  older versions ignore it.
